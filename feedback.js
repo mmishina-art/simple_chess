@@ -40,8 +40,8 @@
     window.addEventListener(ev, unlock, { capture: true, passive: true }));
 
   function tone(freq, dur, opt) {
-    const o = Object.assign({ type: 'sine', gain: 0.2, attack: 0.004, when: 0, slideTo: null }, opt);
-    const t = ctx.currentTime + o.when;
+    const o = Object.assign({ type: 'sine', gain: 0.2, attack: 0.004, when: 0, slideTo: null, at: null, out: null }, opt);
+    const t = o.at !== null ? o.at : ctx.currentTime + o.when;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = o.type;
@@ -50,9 +50,104 @@
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(o.gain, t + o.attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(g).connect(master);
+    osc.connect(g).connect(o.out || master);
     osc.start(t);
     osc.stop(t + dur + 0.02);
+  }
+
+  // ---- BGM（8bit風の自作曲をその場で演奏） ----
+  // 1トークン = 8分音符。'-' は前の音をのばす、'.' は休符。'|' は小節の区切り（読みやすさ用）
+  const TRACKS = {
+    story: {
+      bpm: 100,
+      voices: [
+        { type: 'square', gain: 0.045, notes: 'E5 - G5 - A5 - G5 - | E5 - D5 - C5 - - - | D5 - E5 - G5 - E5 - | D5 - - - - - . . | E5 - G5 - A5 - C6 - | B5 - A5 - G5 - - - | A5 - G5 - E5 - D5 - | C5 - - - - - . .' },
+        { type: 'triangle', gain: 0.09, notes: 'C3 - - - G3 - - - | A2 - - - E3 - - - | F2 - - - C3 - - - | G2 - - - - - - - | C3 - - - G3 - - - | E3 - - - A2 - - - | F2 - - - G2 - - - | C3 - - - - - - -' }
+      ]
+    },
+    battle: {
+      bpm: 140,
+      voices: [
+        { type: 'square', gain: 0.04, notes: 'A4 . A4 C5 E5 - D5 C5 | B4 - G4 - B4 - - - | C5 . C5 E5 A5 - G5 E5 | F5 - E5 - D5 - - - | A4 . A4 C5 E5 - D5 C5 | B4 - G4 - E5 - - - | F5 - E5 - D5 - C5 B4 | A4 - - - - - . .' },
+        { type: 'triangle', gain: 0.09, notes: 'A2 A3 A2 A3 A2 A3 A2 A3 | G2 G3 G2 G3 G2 G3 G2 G3 | F2 F3 F2 F3 F2 F3 F2 F3 | E2 E3 E2 E3 E2 E3 E2 E3' }
+      ]
+    },
+    boss: {
+      bpm: 120,
+      voices: [
+        { type: 'square', gain: 0.04, notes: 'D5 - - - F5 - E5 - | D5 - C#5 - D5 - - - | A4 - - - Bb4 - A4 - | G4 - F4 - E4 - - - | D5 - - - F5 - A5 - | G#5 - - - A5 - - - | Bb5 - A5 - G5 - F5 - | E5 - C#5 - D5 - - -' },
+        { type: 'triangle', gain: 0.1, notes: 'D2 - D3 - D2 - D3 - | D2 - D3 - D2 - D3 - | Bb1 - Bb2 - Bb1 - Bb2 - | A1 - A2 - A1 - A2 -' }
+      ]
+    }
+  };
+
+  const NOTE_INDEX = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function noteFreq(n) {
+    const m = /^([A-G])(#|b)?(\d)$/.exec(n);
+    const semi = NOTE_INDEX[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (+m[3] + 1) * 12;
+    return 440 * Math.pow(2, (semi - 69) / 12);
+  }
+  // 各声部を「その拍で鳴らす音（周波数と長さ）」の配列に変換
+  function compile(track) {
+    return track.voices.map((v) => {
+      const toks = v.notes.split(/\s+/).filter((t) => t && t !== '|');
+      return { type: v.type, gain: v.gain, steps: toks.map((t, i) => {
+        if (t === '-' || t === '.') return null;
+        let len = 1;
+        while (toks[i + len] === '-') len++;
+        return { f: noteFreq(t), len };
+      }) };
+    });
+  }
+
+  let bgmOn = true, bgmName = null, bgmTimer = 0, bgmBus = null, bgmVoices = null, bgmStep = 0, bgmNext = 0, bgmStepDur = 0;
+
+  function bgmTick() {
+    const now = ctx.currentTime;
+    if (bgmNext < now - 0.1) bgmNext = now + 0.05; // バックグラウンドから戻った時に一気に鳴らさない
+    while (bgmNext < now + 0.25) {
+      for (const v of bgmVoices) {
+        const st = v.steps[bgmStep % v.steps.length];
+        if (st) tone(st.f, st.len * bgmStepDur * 0.92, { type: v.type, gain: v.gain, attack: 0.01, at: bgmNext, out: bgmBus });
+      }
+      bgmStep++;
+      bgmNext += bgmStepDur;
+    }
+  }
+
+  function stopBgm() {
+    if (!bgmBus) return;
+    clearInterval(bgmTimer);
+    const bus = bgmBus;
+    bgmBus = null;
+    try {
+      bus.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.12);
+      setTimeout(() => bus.disconnect(), 800);
+    } catch (e) { /* 無視 */ }
+  }
+
+  function playBgm(name) {
+    if (name === bgmName && bgmBus) return;
+    stopBgm();
+    bgmName = name;
+    if (!name || !soundOn || !bgmOn || !TRACKS[name] || !ensureContext()) return;
+    const track = TRACKS[name];
+    bgmVoices = compile(track);
+    bgmStepDur = 60 / track.bpm / 2;
+    bgmStep = 0;
+    bgmBus = ctx.createGain();
+    bgmBus.gain.setValueAtTime(0.0001, ctx.currentTime);
+    bgmBus.gain.setTargetAtTime(1, ctx.currentTime, 0.3); // ふわっと始める
+    bgmBus.connect(master);
+    bgmNext = ctx.currentTime + 0.08;
+    bgmTick();
+    bgmTimer = setInterval(bgmTick, 60);
+  }
+
+  // 会話の「しゃべり音」
+  function blip(freq) {
+    if (!soundOn || !ensureContext()) return;
+    tone(freq * (0.94 + Math.random() * 0.12), 0.04, { type: 'square', gain: 0.035, attack: 0.002 });
   }
 
   function noise(dur, opt) {
@@ -135,7 +230,18 @@
     play(name) { sound(name); vibrate(name); },
     sound,
     vibrate,
-    setSound(on) { soundOn = on; },
+    blip,
+    bgm(name) { try { playBgm(name); } catch (e) { /* 無視 */ } },
+    setBgm(on) {
+      bgmOn = on;
+      const name = bgmName;
+      if (!on) { stopBgm(); bgmName = name; } else if (name) { bgmName = null; this.bgm(name); }
+    },
+    setSound(on) {
+      soundOn = on;
+      const name = bgmName;
+      if (!on) { stopBgm(); bgmName = name; } else if (name) { bgmName = null; this.bgm(name); }
+    },
     setHaptic(on) { hapticOn = on; },
     hapticSupported: canVibrate || isIOS
   };

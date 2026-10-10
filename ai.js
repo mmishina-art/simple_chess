@@ -199,6 +199,142 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
     return best;
   }
 
+  // ---- 強化版探索（ラスボス用） ----
+  // 置換表・ヌルムーブ枝刈り・PVS・後半手の浅読み(LMR)・ヒストリーで、同じ時間でより深く読む
+  const TT_EXACT = 0, TT_LOWER = 1, TT_UPPER = 2;
+  const TT_MAX = 200000; // スマホのメモリを考えて上限を設ける
+  let tt = new Map();
+  let history = Object.create(null);
+
+  const sameMove = (a, b) => !!(a && b && a.from === b.from && a.to === b.to && (a.promo || null) === (b.promo || null));
+
+  function plusOrder(moves, ply, ttMove) {
+    for (const m of moves) {
+      let s = sameMove(m, ttMove) ? 1e8 : orderScore(m, ply, null);
+      if (!m.captured && !m.promo && s < 5e4) s += Math.min(4e4, history[m.piece + m.to] || 0);
+      m._s = s;
+    }
+    moves.sort((a, b) => b._s - a._s);
+  }
+
+  function hasPieces(g) {
+    const white = g.turn === 'w';
+    for (const p of g.board) {
+      if (!p || (p < 'a') !== white) continue;
+      const t = p.toLowerCase();
+      if (t !== 'p' && t !== 'k') return true;
+    }
+    return false;
+  }
+
+  function search(g, depth, alpha, beta, ply, nullOk) {
+    checkTime();
+    if (stopped) return 0;
+    if (ply > 0 && (g.halfmove >= 100 || g.isRepeated(2))) return 0;
+
+    const inCheck = g.inCheck();
+    if (inCheck && ply < 24) depth++;
+    if (depth <= 0) return quiesce(g, alpha, beta, ply);
+
+    const key = g.key();
+    const e = tt.get(key);
+    const ttMove = e ? e.move : null;
+    if (e && e.depth >= depth) {
+      let s = e.score;
+      if (s > MATE - 1000) s -= ply; else if (s < -MATE + 1000) s += ply;
+      if (e.flag === TT_EXACT) return s;
+      if (e.flag === TT_LOWER && s >= beta) return s;
+      if (e.flag === TT_UPPER && s <= alpha) return s;
+    }
+
+    const pvNode = beta - alpha > 1;
+    // ヌルムーブ: パスしてもなお相手を上回るなら、この局面は深く読むまでもない
+    if (nullOk && !pvNode && !inCheck && depth >= 3 && hasPieces(g) && evaluate(g) >= beta) {
+      g.makeNull();
+      const s = -search(g, depth - 3, -beta, -beta + 1, ply + 1, false);
+      g.undoNull();
+      if (stopped) return 0;
+      if (s >= beta) return s >= MATE - 1000 ? beta : s;
+    }
+
+    const moves = g.moves();
+    if (moves.length === 0) return inCheck ? -MATE + ply : 0;
+    plusOrder(moves, ply, ttMove);
+
+    const alpha0 = alpha;
+    let best = -INF, bestMove = null;
+    for (let i = 0; i < moves.length; i++) {
+      const m = moves[i];
+      g.makeMove(m);
+      let s;
+      if (i === 0) {
+        s = -search(g, depth - 1, -beta, -alpha, ply + 1, true);
+      } else {
+        // 有望でなさそうな静かな手は浅く読み、良さそうなら読み直す
+        let r = 0;
+        if (depth >= 3 && i >= 3 && !inCheck && !m.captured && !m.promo && !g.inCheck()) r = i >= 8 ? 2 : 1;
+        s = -search(g, depth - 1 - r, -alpha - 1, -alpha, ply + 1, true);
+        if (s > alpha && r && !stopped) s = -search(g, depth - 1, -alpha - 1, -alpha, ply + 1, true);
+        if (s > alpha && s < beta && !stopped) s = -search(g, depth - 1, -beta, -alpha, ply + 1, true);
+      }
+      g.undo();
+      if (stopped) return 0;
+      if (s > best) { best = s; bestMove = m; }
+      if (s > alpha) alpha = s;
+      if (alpha >= beta) {
+        if (!m.captured && !m.promo) {
+          const k = killers[ply] || (killers[ply] = [null, null]);
+          k[1] = k[0]; k[0] = m;
+          history[m.piece + m.to] = (history[m.piece + m.to] || 0) + depth * depth;
+        }
+        break;
+      }
+    }
+
+    let store = best;
+    if (store > MATE - 1000) store += ply; else if (store < -MATE + 1000) store -= ply;
+    if (tt.size >= TT_MAX) tt.clear();
+    tt.set(key, {
+      depth, score: store,
+      flag: best <= alpha0 ? TT_UPPER : best >= beta ? TT_LOWER : TT_EXACT,
+      move: bestMove && { from: bestMove.from, to: bestMove.to, promo: bestMove.promo }
+    });
+    return best;
+  }
+
+  function iterativeDeepeningPlus(g, moves, maxDepth, timeMs) {
+    deadline = Date.now() + timeMs;
+    tt = new Map();
+    history = Object.create(null);
+    let best = moves[0];
+    for (let depth = 1; depth <= maxDepth; depth++) {
+      let alpha = -INF, iterBest = null;
+      plusOrder(moves, 0, best);
+      for (let i = 0; i < moves.length; i++) {
+        const m = moves[i];
+        g.makeMove(m);
+        let s;
+        if (i === 0) s = -search(g, depth - 1, -INF, INF, 1, true);
+        else {
+          s = -search(g, depth - 1, -alpha - 1, -alpha, 1, true);
+          if (s > alpha && !stopped) s = -search(g, depth - 1, -INF, -alpha, 1, true);
+        }
+        g.undo();
+        if (stopped) break;
+        if (s > alpha || !iterBest) { alpha = s; iterBest = m; }
+      }
+      lastDepth = depth - (stopped ? 1 : 0);
+      if (stopped) {
+        if (iterBest) best = iterBest;
+        break;
+      }
+      best = iterBest;
+      if (alpha >= MATE - 1000) break;
+    }
+    return best;
+  }
+  let lastDepth = 0;
+
   // 全ての指し手を正確な評価値で採点し、ノイズを加えて選ぶ（弱め・中程度のレベル用）
   function pickWithNoise(g, moves, depth, useQ, noise) {
     sortMoves(moves, 0, null);
@@ -253,7 +389,7 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
     s7: { depth: 3, useQ: true, noise: 15, randomRate: 0 },
     s8: { depth: 8, timeMs: 900 },
     s9: { depth: 8, timeMs: 2000 },
-    s10: { depth: 10, timeMs: 3500 }
+    s10: { depth: 30, timeMs: 3500, plus: true }
   };
 
   function think(fen, uciMoves, level) {
@@ -270,7 +406,9 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
     nodes = 0; stopped = false; killers = []; deadline = Infinity;
     const cfg = LEVELS[level] || LEVELS[2];
     let m;
-    if (cfg.timeMs) {
+    if (cfg.plus) {
+      m = iterativeDeepeningPlus(g, moves, cfg.depth, cfg.timeMs);
+    } else if (cfg.timeMs) {
       m = iterativeDeepening(g, moves, cfg.depth, cfg.timeMs);
     } else if (Math.random() < cfg.randomRate) {
       m = moves[Math.floor(Math.random() * moves.length)];
@@ -281,7 +419,7 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
     return Chess.uci(m || moves[0]);
   }
 
-  const api = { think, evaluate };
+  const api = { think, evaluate, lastDepth: () => lastDepth };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 
   // Worker として動作している場合

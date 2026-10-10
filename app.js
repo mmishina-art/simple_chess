@@ -21,7 +21,7 @@
   const fx = window.Feedback;
 
   // ---- 状態 ----
-  const settings = { mode: 'cpu', level: '2', color: 'w', sound: 'on', haptic: 'on' };
+  const settings = { mode: 'cpu', level: '2', color: 'w', sound: 'on', haptic: 'on', bgm: 'on' };
   let state = null; // { mode, level, human, moves: [uci], flipped, over }
   let game = new Chess();
   let sanList = [];
@@ -84,6 +84,7 @@
   function applyFeedbackSettings() {
     fx.setSound(settings.sound !== 'off');
     fx.setHaptic(settings.haptic !== 'off');
+    fx.setBgm(settings.bgm !== 'off');
     const btn = $('soundBtn');
     btn.classList.toggle('off', settings.sound === 'off');
     btn.setAttribute('aria-label', settings.sound === 'off' ? '効果音をオンにする' : '効果音をオフにする');
@@ -134,6 +135,7 @@
     $('game').hidden = true;
     $('story').hidden = true;
     $('menu').hidden = false;
+    fx.bgm(null);
     syncMenu();
     storyBannerUpdate();
   }
@@ -163,6 +165,7 @@
       : state.mode === 'cpu' ? `CPU（${LEVEL_NAME[state.level]}）と対戦` : '2人で対戦';
     $('menuBtn').innerHTML = isStory ? '&#8592; ストーリー' : '&#8592; メニュー';
     $('newBtn').textContent = isStory ? 'やり直す' : '新しい対局';
+    fx.bgm(isStory && !state.over ? (state.stage >= 9 ? 'boss' : 'battle') : null);
     rebuild();
     resultShown = state.over; // 終局済みの対局を開き直した時は結果を再表示しない
     resizeBoard();
@@ -632,6 +635,7 @@
     $('menu').hidden = true;
     $('game').hidden = true;
     $('story').hidden = false;
+    fx.bgm('story');
     $('storyCount').textContent = `${story.cleared}/10`;
     $('endingBtn').hidden = !debug && story.cleared < 10;
     $('resetStoryBtn').hidden = !debug;
@@ -702,6 +706,7 @@
   }
 
   function storyResult(st) {
+    fx.bgm(null);
     const S = stageInfo();
     const win = st.winner === state.human;
     const n = state.stage;
@@ -755,12 +760,19 @@
   let scene = null;
   const TYPE_MS = 32;
 
+  // キャラごとの声の高さ（しゃべり音の周波数）
+  const VOICE = {
+    pipi: 1150, s1: 900, s2: 1300, s3: 620, s4: 760, s5: 230, s6: 840,
+    s7: 400, s8: 340, s9: 280, s10: 210, noirKind: 560, me: 680
+  };
+  const SILENT_CHARS = /[\s、。！？!?…・「」『』（）()ー～]/;
+
   function speaker(who, ctx) {
-    if (who === 'p') return { name: Story.PIPI.name, key: 'pipi', stage: 0 };
-    if (who === 'e') return { name: stageInfo(ctx.stage).name, key: 's' + ctx.stage, stage: ctx.stage };
-    if (who === 'k') return { name: 'ノワール', key: 'noirKind', stage: 0 };
-    if (who === 'me') return { name: 'きみ', key: null, me: true };
-    return { name: '', key: null };
+    if (who === 'p') return { name: Story.PIPI.name, key: 'pipi', stage: 0, voice: VOICE.pipi };
+    if (who === 'e') return { name: stageInfo(ctx.stage).name, key: 's' + ctx.stage, stage: ctx.stage, voice: VOICE['s' + ctx.stage] };
+    if (who === 'k') return { name: 'ノワール', key: 'noirKind', stage: 0, voice: VOICE.noirKind };
+    if (who === 'me') return { name: 'きみ', key: null, me: true, voice: VOICE.me };
+    return { name: '', key: null, voice: 0 };
   }
 
   function playScene(lines, ctx, onDone) {
@@ -768,6 +780,7 @@
     $('sceneChapter').textContent = ctx.chapter || '';
     $('scene').hidden = false;
     $('scene').className = 'scene' + (ctx.stage >= 9 ? ' dark' : '');
+    fx.bgm(ctx.stage >= 9 ? 'boss' : 'story');
     $('scenePortrait').innerHTML = '';
     nextLine();
   }
@@ -802,6 +815,9 @@
     scene.timer = setInterval(() => {
       scene.pos++;
       el.textContent = text.slice(0, scene.pos);
+      // 文字に合わせて「ポポポ」としゃべる（ナレーションは無音）
+      const ch = text[scene.pos - 1];
+      if (sp.voice && scene.pos % 2 === 1 && !SILENT_CHARS.test(ch)) fx.blip(sp.voice);
       if (scene.pos >= text.length) finishTyping();
     }, TYPE_MS);
   }
@@ -952,10 +968,47 @@
     }, { passive: true });
   }
 
+  // ---- 新しいバージョンの通知と更新 ----
+  function initUpdates() {
+    const sw = navigator.serviceWorker;
+    // 「更新」を押した時だけ再読み込みする（初回インストール時の切り替えでは読み込み直さない）
+    let wantReload = false;
+    sw.addEventListener('controllerchange', () => {
+      if (!wantReload) return;
+      wantReload = false;
+      location.reload();
+    });
+    sw.register('sw.js').then((reg) => {
+      const offer = (worker) => {
+        // 初回インストール時（まだ旧版がない）は通知しない
+        if (!worker || !sw.controller) return;
+        $('updateBar').hidden = false;
+        $('updateBtn').onclick = () => {
+          $('updateBtn').disabled = true;
+          $('updateBtn').textContent = '更新中…';
+          wantReload = true;
+          worker.postMessage({ type: 'SKIP_WAITING' });
+        };
+      };
+      if (reg.waiting) offer(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => { if (nw.state === 'installed') offer(nw); });
+      });
+      // アプリを開き直した時や、しばらくぶりに表示した時に新しい版を確認する
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+    }).catch(() => { /* オフライン非対応でも動作 */ });
+    $('updateLater').addEventListener('click', () => { $('updateBar').hidden = true; });
+  }
+
   // ---- PWA ----
   function initPWA() {
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-      navigator.serviceWorker.register('sw.js').catch(() => { /* オフライン非対応でも動作 */ });
+      initUpdates();
     }
     const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
     const hint = $('installHint');

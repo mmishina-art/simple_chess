@@ -294,6 +294,28 @@
       this.keys.push(this.key());
     }
 
+    // 探索用の「パス」（手番だけを相手に渡す）。undoNull で戻す
+    makeNull() {
+      this.stack.push({
+        m: null, castling: this.castling, ep: this.ep, halfmove: this.halfmove,
+        fullmove: this.fullmove, h1: this.h1, h2: this.h2
+      });
+      if (this.ep >= 0) { this.h1 ^= Z1.ep[this.ep & 7]; this.h2 ^= Z2.ep[this.ep & 7]; }
+      this.h1 = (this.h1 ^ Z1.side) >>> 0; this.h2 = (this.h2 ^ Z2.side) >>> 0;
+      this.ep = -1;
+      this.halfmove = 0; // パスをまたいだ千日手判定をしない
+      this.turn = other(this.turn);
+      this.keys.push(this.key());
+    }
+
+    undoNull() {
+      const st = this.stack.pop();
+      this.turn = other(this.turn);
+      this.castling = st.castling; this.ep = st.ep; this.halfmove = st.halfmove;
+      this.fullmove = st.fullmove; this.h1 = st.h1; this.h2 = st.h2;
+      this.keys.pop();
+    }
+
     undo() {
       const st = this.stack.pop();
       if (!st) return null;

@@ -63,6 +63,13 @@
           <button type="button" data-value="off">オフ</button>
         </div>
       </section>
+      <section>
+        <h2>BGM</h2>
+        <div class="seg" data-name="bgm" role="radiogroup">
+          <button type="button" data-value="on">オン</button>
+          <button type="button" data-value="off">オフ</button>
+        </div>
+      </section>
       <section id="hapticSection">
         <h2>振動</h2>
         <div class="seg" data-name="haptic" role="radiogroup">
@@ -193,6 +200,13 @@
         <button type="button" id="confirmYes" class="btn primary">はい</button>
       </div>
     </div>
+  </div>
+
+  <!-- 新しいバージョンのお知らせ -->
+  <div id="updateBar" class="update-bar" role="status" hidden>
+    <span>新しいバージョンがあります</span>
+    <button type="button" id="updateLater" class="btn small">あとで</button>
+    <button type="button" id="updateBtn" class="btn small primary">更新</button>
   </div>
 
   <script src="chess.js"></script>
