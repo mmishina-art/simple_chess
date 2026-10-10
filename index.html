@@ -48,6 +48,21 @@
         </section>
       </div>
 
+      <section>
+        <h2>効果音</h2>
+        <div class="seg" data-name="sound" role="radiogroup">
+          <button type="button" data-value="on">オン</button>
+          <button type="button" data-value="off">オフ</button>
+        </div>
+      </section>
+      <section id="hapticSection">
+        <h2>振動</h2>
+        <div class="seg" data-name="haptic" role="radiogroup">
+          <button type="button" data-value="on">オン</button>
+          <button type="button" data-value="off">オフ</button>
+        </div>
+      </section>
+
       <button type="button" id="startBtn" class="btn primary">対局開始</button>
       <button type="button" id="resumeBtn" class="btn" hidden>前回の続きから</button>
       <p id="installHint" class="hint" hidden></p>
@@ -59,6 +74,9 @@
     <header class="topbar">
       <button type="button" id="menuBtn" class="icon-btn" aria-label="メニューへ戻る">&#8592; メニュー</button>
       <div id="gameTitle" class="title"></div>
+      <button type="button" id="soundBtn" class="icon-btn sound-btn" aria-label="効果音をオフにする">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="mute" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
     </header>
 
     <div class="layout">
@@ -119,6 +137,7 @@
   </div>
 
   <script src="chess.js"></script>
+  <script src="feedback.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

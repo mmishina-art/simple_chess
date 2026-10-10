@@ -9,11 +9,14 @@
   const COLOR_NAME = { w: '白', b: '黒' };
   const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9 };
   const CPU_MIN_DELAY = 450;
+  const SLIDE_MS = 170;      // 駒が滑る時間
+  const DRAG_START_PX = 6;   // これ以上動いたらドラッグ扱い
 
   const $ = (id) => document.getElementById(id);
+  const fx = window.Feedback;
 
   // ---- 状態 ----
-  const settings = { mode: 'cpu', level: '2', color: 'w' };
+  const settings = { mode: 'cpu', level: '2', color: 'w', sound: 'on', haptic: 'on' };
   let state = null; // { mode, level, human, moves: [uci], flipped, over }
   let game = new Chess();
   let sanList = [];
@@ -23,6 +26,8 @@
   let aiRequestId = 0;
   let worker = null;
   let resultShown = false;
+  let drag = null;
+  let animating = 0;
 
   // ---- 保存 ----
   function save() {
@@ -37,6 +42,14 @@
     } catch (e) { /* 無視 */ }
   }
 
+  function applyFeedbackSettings() {
+    fx.setSound(settings.sound !== 'off');
+    fx.setHaptic(settings.haptic !== 'off');
+    const btn = $('soundBtn');
+    btn.classList.toggle('off', settings.sound === 'off');
+    btn.setAttribute('aria-label', settings.sound === 'off' ? '効果音をオンにする' : '効果音をオフにする');
+  }
+
   // ---- メニュー ----
   function initMenu() {
     document.querySelectorAll('.seg').forEach((seg) => {
@@ -46,11 +59,13 @@
         if (!btn) return;
         settings[name] = btn.dataset.value;
         syncMenu();
+        applyFeedbackSettings();
         save();
       });
     });
     $('startBtn').addEventListener('click', () => startGame());
     $('resumeBtn').addEventListener('click', () => showGame());
+    $('hapticSection').hidden = !fx.hapticSupported;
     syncMenu();
   }
 
@@ -69,6 +84,7 @@
 
   function showMenu() {
     cancelAI();
+    cancelDrag();
     $('game').hidden = true;
     $('menu').hidden = false;
     syncMenu();
@@ -99,7 +115,7 @@
     resultShown = state.over; // 終局済みの対局を開き直した時は結果を再表示しない
     resizeBoard();
     render();
-    afterMove();
+    afterMove(null);
   }
 
   // 棋譜（UCIの列）から局面を再構築
@@ -124,20 +140,28 @@
   function buildBoard() {
     const board = $('board');
     for (let v = 0; v < 64; v++) {
-      const el = document.createElement('button');
-      el.type = 'button';
+      const el = document.createElement('div');
       el.className = 'sq';
       el.setAttribute('role', 'gridcell');
-      el.addEventListener('click', () => onSquare(el._sq));
       board.appendChild(el);
       squares.push(el);
     }
+    board.addEventListener('pointerdown', onPointerDown);
+    board.addEventListener('pointermove', onPointerMove);
+    board.addEventListener('pointerup', onPointerUp);
+    board.addEventListener('pointercancel', cancelDrag);
+    board.addEventListener('lostpointercapture', () => { if (drag) cancelDrag(); });
+    board.addEventListener('contextmenu', (e) => e.preventDefault());
   }
+
+  function sqSize() { return $('board').clientWidth / 8; }
 
   function resizeBoard() {
     const w = $('board').clientWidth;
     if (w) document.documentElement.style.setProperty('--sq', (w / 8) + 'px');
   }
+
+  const viewIndex = (sq) => (state.flipped ? 63 - sq : sq);
 
   function pieceHtml(p) {
     const color = Chess.colorOf(p);
@@ -148,14 +172,17 @@
     return state.mode === 'pvp' || game.turn === state.human;
   }
 
+  function canInteract() {
+    return !state.over && !thinking && isHumanTurn() && $('promoModal').hidden;
+  }
+
   function render() {
-    const flipped = state.flipped;
     const last = game.stack.length ? game.stack[game.stack.length - 1].m : null;
     const checkSq = game.inCheck() ? game.kings[game.turn] : -1;
     const targets = new Map(legalFromSelected.map((m) => [m.to, m]));
 
     for (let v = 0; v < 64; v++) {
-      const sq = flipped ? 63 - v : v;
+      const sq = state.flipped ? 63 - v : v;
       const el = squares[v];
       el._sq = sq;
       const r = sq >> 3, c = sq & 7;
@@ -167,6 +194,7 @@
         cls.push('target');
         if (targets.get(sq).captured) cls.push('capture');
       }
+      if (drag && drag.moved && sq === drag.from) cls.push('dragging');
       el.className = cls.join(' ');
 
       let html = '';
@@ -275,27 +303,124 @@
     el.scrollTop = el.scrollHeight;
   }
 
-  // ---- 操作 ----
-  function onSquare(sq) {
-    if (state.over || thinking || !isHumanTurn()) return;
-    const p = game.board[sq];
+  // ---- 盤の操作（タップ・ドラッグ） ----
+  function squareAt(x, y) {
+    const rect = $('board').getBoundingClientRect();
+    const c = Math.floor((x - rect.left) / (rect.width / 8));
+    const r = Math.floor((y - rect.top) / (rect.height / 8));
+    if (c < 0 || c > 7 || r < 0 || r > 7) return -1;
+    return viewIndex(r * 8 + c);
+  }
 
-    if (selected >= 0) {
-      const candidates = legalFromSelected.filter((m) => m.to === sq);
-      if (candidates.length === 1) { playMove(candidates[0]); return; }
-      if (candidates.length > 1) { choosePromotion(candidates); return; }
-    }
-    if (p && Chess.colorOf(p) === game.turn && sq !== selected) {
-      selected = sq;
-      legalFromSelected = game.movesFrom(sq);
-    } else {
-      selected = -1;
-      legalFromSelected = [];
-    }
+  function selectSquare(sq) {
+    selected = sq;
+    legalFromSelected = game.movesFrom(sq);
+    fx.play('select');
     render();
   }
 
-  function choosePromotion(candidates) {
+  function clearSelection() {
+    selected = -1;
+    legalFromSelected = [];
+    render();
+  }
+
+  // 選択中の駒を sq へ動かす。動かせたら true
+  function moveSelectedTo(sq, animate) {
+    const candidates = legalFromSelected.filter((m) => m.to === sq);
+    if (!candidates.length) return false;
+    if (candidates.length > 1) choosePromotion(candidates, animate);
+    else playMove(candidates[0], animate);
+    return true;
+  }
+
+  function onPointerDown(e) {
+    if (e.button > 0 || drag) return;
+    const el = e.target.closest('.sq');
+    if (!el || animating) return;
+    if (!canInteract()) {
+      if (!state.over && thinking) fx.play('error');
+      return;
+    }
+    e.preventDefault();
+    const sq = el._sq;
+    const p = game.board[sq];
+
+    // 指を置いた瞬間に移動させる（タップ→タップ操作）
+    if (selected >= 0 && sq !== selected && moveSelectedTo(sq, true)) return;
+
+    if (p && Chess.colorOf(p) === game.turn) {
+      const wasSelected = sq === selected;
+      if (!wasSelected) selectSquare(sq);
+      drag = { from: sq, id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, wasSelected, ghost: null, over: -1 };
+      try { $('board').setPointerCapture(e.pointerId); } catch (err) { /* 無視 */ }
+    } else if (selected >= 0) {
+      fx.play('error');
+      clearSelection();
+    }
+  }
+
+  function onPointerMove(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved) {
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < DRAG_START_PX) return;
+      drag.moved = true;
+      const ghost = document.createElement('div');
+      ghost.className = 'ghost';
+      ghost.innerHTML = pieceHtml(game.board[drag.from]);
+      ghost.style.width = ghost.style.height = sqSize() + 'px';
+      document.body.appendChild(ghost);
+      drag.ghost = ghost;
+      squares[viewIndex(drag.from)].classList.add('dragging');
+    }
+    const s = sqSize();
+    // 指で駒が隠れないよう、少し上に浮かせる
+    const lift = e.pointerType === 'touch' ? s * 0.45 : 0;
+    drag.ghost.style.transform = `translate(${e.clientX - s / 2}px, ${e.clientY - s / 2 - lift}px) scale(1.18)`;
+
+    const over = squareAt(e.clientX, e.clientY - lift);
+    if (over !== drag.over) {
+      if (drag.over >= 0) squares[viewIndex(drag.over)].classList.remove('hover');
+      drag.over = over;
+      if (over >= 0 && over !== drag.from) {
+        squares[viewIndex(over)].classList.add('hover');
+        if (legalFromSelected.some((m) => m.to === over)) fx.vibrate('tap');
+      }
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    if (d.moved) {
+      const target = d.over;
+      cleanupDrag();
+      if (target >= 0 && target !== d.from && moveSelectedTo(target, false)) return;
+      if (target >= 0 && target !== d.from) fx.play('error');
+      render(); // 元の位置に戻す
+    } else {
+      cleanupDrag();
+      // 選択済みの駒をもう一度タップしたら選択解除
+      if (d.wasSelected) clearSelection();
+    }
+  }
+
+  function cleanupDrag() {
+    if (!drag) return;
+    if (drag.ghost) drag.ghost.remove();
+    if (drag.over >= 0) squares[viewIndex(drag.over)].classList.remove('hover');
+    squares[viewIndex(drag.from)].classList.remove('dragging');
+    try { $('board').releasePointerCapture(drag.id); } catch (err) { /* 無視 */ }
+    drag = null;
+  }
+
+  function cancelDrag() {
+    if (!drag) return;
+    cleanupDrag();
+    render();
+  }
+
+  function choosePromotion(candidates, animate) {
     const box = $('promoChoices');
     box.innerHTML = '';
     for (const t of ['q', 'r', 'b', 'n']) {
@@ -304,23 +429,64 @@
       btn.type = 'button';
       btn.innerHTML = pieceHtml(m.promo);
       btn.setAttribute('aria-label', pieceName(t));
-      btn.addEventListener('click', () => { $('promoModal').hidden = true; playMove(m); });
+      btn.addEventListener('click', () => { $('promoModal').hidden = true; playMove(m, animate); });
       box.appendChild(btn);
     }
     $('promoModal').hidden = false;
   }
 
-  function playMove(m) {
+  // 指し手に応じた効果音
+  function moveSound(m) {
+    if (m.promo) return 'promote';
+    if (m.flag === 'k' || m.flag === 'q') return 'castle';
+    if (m.captured) return 'capture';
+    return 'move';
+  }
+
+  // 駒を移動元から滑らせる
+  function slide(m) {
+    const s = sqSize();
+    const pairs = [[m.from, m.to]];
+    if (m.flag === 'k') pairs.push([m.to + 1, m.to - 1]);
+    if (m.flag === 'q') pairs.push([m.to - 2, m.to + 1]);
+    for (const [from, to] of pairs) {
+      const vf = viewIndex(from), vt = viewIndex(to);
+      const piece = squares[vt].querySelector('.piece');
+      if (!piece) continue;
+      const dx = ((vf & 7) - (vt & 7)) * s, dy = ((vf >> 3) - (vt >> 3)) * s;
+      piece.style.transition = 'none';
+      piece.style.transform = `translate(${dx}px, ${dy}px)`;
+      piece.classList.add('moving');
+      piece.getBoundingClientRect(); // リフローを強制
+      piece.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.2,.8,.3,1)`;
+      piece.style.transform = '';
+    }
+  }
+
+  function playMove(m, animate) {
     sanList.push(game.san(m));
     game.makeMove(m);
     state.moves.push(Chess.uci(m));
     selected = -1;
     legalFromSelected = [];
-    afterMove();
+    const st = game.status();
+    const after = () => {
+      fx.play(moveSound(m));
+      if (game.inCheck() && !st.over) fx.play('check');
+    };
+    if (animate) {
+      render();
+      slide(m);
+      animating++;
+      setTimeout(() => { animating--; after(); afterMove(st); }, SLIDE_MS - 20);
+    } else {
+      after();
+      afterMove(st);
+    }
   }
 
-  function afterMove() {
-    const st = game.status();
+  function afterMove(status) {
+    const st = status || game.status();
     state.over = st.over;
     save();
     render();
@@ -330,7 +496,12 @@
         const r = resultMessage(st);
         $('resultTitle').textContent = r.title;
         $('resultText').textContent = r.text;
-        setTimeout(() => { $('resultModal').hidden = false; }, 350);
+        setTimeout(() => {
+          $('resultModal').hidden = false;
+          let s = 'draw';
+          if (st.winner) s = state.mode === 'cpu' && st.winner !== state.human ? 'lose' : 'win';
+          fx.play(s);
+        }, 450);
       }
       return;
     }
@@ -364,7 +535,7 @@
       if (id !== aiRequestId) return;
       thinking = false;
       const m = uci && game.moveFromUci(uci);
-      if (m) playMove(m);
+      if (m) playMove(m, true);
       else render();
     }, wait);
   }
@@ -376,8 +547,9 @@
   }
 
   function undo() {
-    if (!state.moves.length) return;
+    if (!state.moves.length || animating) return;
     cancelAI();
+    cancelDrag();
     state.moves.pop();
     if (state.mode === 'cpu') {
       rebuild();
@@ -390,7 +562,7 @@
     state.over = false;
     resultShown = false;
     $('resultModal').hidden = true;
-    afterMove();
+    afterMove(null);
   }
 
   // ---- 確認ダイアログ ----
@@ -413,16 +585,31 @@
       if (state.over || state.moves.length === 0) { showMenu(); return; }
       confirmBox('対局を終了してメニューに戻りますか？', () => { state.over = true; save(); showMenu(); });
     });
+    $('soundBtn').addEventListener('click', () => {
+      settings.sound = settings.sound === 'off' ? 'on' : 'off';
+      applyFeedbackSettings();
+      syncMenu();
+      save();
+      if (settings.sound === 'on') fx.sound('tap');
+    });
     $('promoCancel').addEventListener('click', () => {
       $('promoModal').hidden = true;
-      selected = -1; legalFromSelected = [];
-      render();
+      clearSelection();
     });
     $('resultClose').addEventListener('click', () => { $('resultModal').hidden = true; });
     $('resultNew').addEventListener('click', () => { $('resultModal').hidden = true; showMenu(); });
 
     if (window.ResizeObserver) new ResizeObserver(resizeBoard).observe($('board'));
     else window.addEventListener('resize', resizeBoard);
+  }
+
+  // ボタンは指が触れた瞬間に音と振動で応える
+  function initButtonFeedback() {
+    document.addEventListener('pointerdown', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn || btn.disabled || btn.id === 'soundBtn') return;
+      fx.play('tap');
+    }, { passive: true });
   }
 
   // ---- PWA ----
@@ -455,5 +642,7 @@
   buildBoard();
   initMenu();
   initGameControls();
+  initButtonFeedback();
+  applyFeedbackSettings();
   initPWA();
 })();
