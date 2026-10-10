@@ -48,6 +48,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .seg button:active { transform: scale(.95); }
 .seg button { transition: background .15s, color .15s, transform .08s; }
+#cpuOptions { transition: opacity .2s; }
+#cpuOptions.inactive { opacity: .3; }
+#cpuOptions.inactive .seg button { cursor: default; }
 .seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
 .btn {
   border: 0; border-radius: 12px; padding: 12px 16px; background: var(--panel-2);

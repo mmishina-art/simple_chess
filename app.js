@@ -78,7 +78,12 @@
         b.setAttribute('role', 'radio');
       });
     });
-    $('cpuOptions').hidden = settings.mode !== 'cpu';
+    // 2人対戦ではCPU設定を薄く表示して無効化する（消すとレイアウトがずれるため）
+    const cpuOff = settings.mode !== 'cpu';
+    const cpuBox = $('cpuOptions');
+    cpuBox.classList.toggle('inactive', cpuOff);
+    cpuBox.setAttribute('aria-disabled', cpuOff);
+    cpuBox.querySelectorAll('button').forEach((b) => { b.disabled = cpuOff; });
     $('resumeBtn').hidden = !(state && state.moves.length > 0 && !state.over);
   }
 
