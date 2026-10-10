@@ -250,11 +250,13 @@
     blip,
     bgm(name) { try { playBgm(name); } catch (e) { /* 無視 */ } },
     setBgm(on) {
+      if (on === bgmOn) return; // 変化がなければ流れている曲をそのまま続ける
       bgmOn = on;
       const name = bgmName;
       if (!on) { stopBgm(); bgmName = name; } else if (name) { bgmName = null; this.bgm(name); }
     },
     setSound(on) {
+      if (on === soundOn) return;
       soundOn = on;
       const name = bgmName;
       if (!on) { stopBgm(); bgmName = name; } else if (name) { bgmName = null; this.bgm(name); }

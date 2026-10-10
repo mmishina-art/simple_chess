@@ -101,7 +101,7 @@
         if (!btn) return;
         settings[name] = btn.dataset.value;
         syncMenu();
-        applyFeedbackSettings();
+        if (name === 'sound' || name === 'bgm' || name === 'haptic') applyFeedbackSettings();
         save();
       });
     });
