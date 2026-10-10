@@ -178,3 +178,87 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .promo-choices button { transition: transform .08s; }
 .promo-choices button:active { background: var(--accent); transform: scale(.92); }
+
+/* ---- ストーリーモード ---- */
+.story-banner {
+  width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
+  border: 0; border-radius: 14px; padding: 10px 14px 10px 10px;
+  background: linear-gradient(135deg, #3b2a5c, #6a2a3a); color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3); transition: transform .08s, filter .15s;
+}
+.story-banner:active { transform: scale(.97); filter: brightness(1.15); }
+.story-banner-av { width: 56px; height: 56px; flex: none; }
+.story-banner-av svg, .stage-av svg, .player .avatar svg, .result-av svg, .scene-portrait svg { width: 100%; height: 100%; display: block; }
+.story-banner-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.story-banner-text strong { font-size: 1.1rem; letter-spacing: .05em; }
+.story-banner-text small { font-size: .78rem; color: #f3d9ff; line-height: 1.35; }
+.story-banner .chev { font-size: 1.8rem; opacity: .7; }
+.menu-card h2.free-head { margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, .08); color: var(--text); font-size: .95rem; }
+
+#story { min-height: 100%; display: flex; flex-direction: column; }
+.story-count { color: var(--accent); font-weight: 700; font-size: .95rem; }
+.story-list { display: flex; flex-direction: column; gap: 10px; padding: 4px 12px 12px; width: 100%; max-width: 560px; margin: 0 auto; }
+.stage-card {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  border: 0; border-radius: 14px; padding: 10px 12px; background: var(--panel);
+  transition: transform .08s, filter .15s;
+}
+.stage-card:active:not(:disabled) { transform: scale(.97); filter: brightness(1.15); }
+.stage-card.next { background: linear-gradient(135deg, #4a3a1c, #2b3830); box-shadow: 0 0 0 2px var(--accent) inset; }
+.stage-card.locked { cursor: default; }
+.stage-card.locked .stage-av { filter: brightness(0) opacity(.35); }
+.stage-card.locked .stage-info strong, .stage-card.locked .stage-info small { color: var(--muted); }
+.stage-av { width: 64px; height: 64px; flex: none; }
+.stage-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stage-no { font-size: .75rem; color: var(--muted); }
+.stage-info strong { font-size: 1.08rem; }
+.stage-info small { font-size: .8rem; color: var(--muted); }
+.stage-badge { font-size: .8rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: rgba(255, 255, 255, .08); white-space: nowrap; }
+.stage-card.cleared .stage-badge { background: #2f6b43; color: #d6ffe2; }
+.stage-card.next .stage-badge { background: var(--accent); color: var(--accent-text); }
+.story-extra { display: flex; justify-content: center; gap: 10px; padding: 4px 12px 24px; }
+
+.player .avatar { width: 28px; height: 28px; flex: none; }
+
+.board-wrap { position: relative; }
+.bubble {
+  position: absolute; top: -6px; left: 8px; max-width: 80%; z-index: 5; pointer-events: none;
+  background: #fff; color: #222; font-weight: 700; font-size: .92rem; line-height: 1.4;
+  padding: 8px 12px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+}
+.bubble::before { content: ""; position: absolute; top: -7px; left: 14px; border: 7px solid transparent; border-top: 0; border-bottom-color: #fff; }
+.bubble.pop { animation: pop .25s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.result-av { width: 84px; height: 84px; margin: 0 auto 8px; }
+
+/* 会話シーン */
+.scene {
+  position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; justify-content: flex-end;
+  background: radial-gradient(circle at 50% 35%, #3a4d6a 0%, #1a2230 70%);
+  padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 16px);
+  cursor: pointer;
+}
+.scene.dark { background: radial-gradient(circle at 50% 35%, #4a1424 0%, #0d0408 70%); }
+.scene-chapter { position: absolute; top: calc(env(safe-area-inset-top) + 16px); left: 16px; right: 110px; color: #e8e2d0; font-size: .85rem; font-weight: 700; letter-spacing: .05em; opacity: .85; }
+.scene-skip { position: absolute; top: calc(env(safe-area-inset-top) + 8px); right: 12px; border: 0; background: rgba(255, 255, 255, .12); border-radius: 99px; padding: 8px 14px; font-size: .85rem; }
+.scene-stage { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.scene-portrait { width: min(62vw, 42vh, 300px); aspect-ratio: 1; transition: opacity .25s, transform .25s, filter .25s; }
+.scene-portrait.dim { opacity: .35; filter: grayscale(.5); transform: scale(.94); }
+.scene-portrait.enter { animation: enter .35s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes enter { from { transform: translateY(16px) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+.scene-box {
+  position: relative; width: 100%; max-width: 640px; margin: 0 auto; min-height: 9.5em;
+  background: rgba(16, 20, 28, .88); border: 2px solid rgba(255, 255, 255, .18); border-radius: 16px;
+  padding: 26px 18px 18px;
+}
+.scene-name {
+  position: absolute; top: -16px; left: 14px; background: var(--accent); color: var(--accent-text);
+  font-weight: 800; padding: 4px 14px; border-radius: 10px; font-size: .95rem;
+}
+.scene.me .scene-name { background: #6fc3ff; color: #082033; left: auto; right: 14px; }
+.scene.narration .scene-name { display: none; }
+.scene.narration .scene-text { color: #d8d2c0; font-style: italic; }
+.scene-text { margin: 0; font-size: 1.05rem; line-height: 1.75; color: #fff; white-space: pre-wrap; }
+.scene-next { position: absolute; right: 16px; bottom: 8px; font-size: .8rem; color: var(--accent); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .2; } }

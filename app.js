@@ -3,6 +3,7 @@
   'use strict';
 
   const STORAGE_KEY = 'simple-chess-state-v1';
+  const STORY_KEY = 'simple-chess-story-v1';
   const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
   const VS = '︎'; // 絵文字ではなく文字として表示させる
   const LEVEL_NAME = { 1: 'やさしい', 2: 'ふつう', 3: 'つよい' };
@@ -15,6 +16,7 @@
   const DRAG_START_PX = 6;   // これ以上動いたらドラッグ扱い
 
   const $ = (id) => document.getElementById(id);
+  const vsCPU = () => state.mode === 'cpu' || state.mode === 'story';
   const fx = window.Feedback;
 
   // ---- 状態 ----
@@ -37,6 +39,14 @@
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, state })); } catch (e) { /* 保存できなくても続行 */ }
   }
+  let story = { cleared: 0, prologue: false };
+  function saveStory() {
+    try { localStorage.setItem(STORY_KEY, JSON.stringify(story)); } catch (e) { /* 無視 */ }
+  }
+  function loadStory() {
+    try { Object.assign(story, JSON.parse(localStorage.getItem(STORY_KEY) || '{}')); } catch (e) { /* 無視 */ }
+  }
+
   function load() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
@@ -95,9 +105,12 @@
     cancelAI();
     cancelFlip();
     cancelDrag();
+    hideBubble();
     $('game').hidden = true;
+    $('story').hidden = true;
     $('menu').hidden = false;
     syncMenu();
+    storyBannerUpdate();
   }
 
   function startGame() {
@@ -117,10 +130,14 @@
 
   function showGame() {
     $('menu').hidden = true;
+    $('story').hidden = true;
     $('game').hidden = false;
-    $('gameTitle').textContent = state.mode === 'cpu'
-      ? `CPU（${LEVEL_NAME[state.level]}）と対戦`
-      : '2人で対戦';
+    const isStory = state.mode === 'story';
+    $('gameTitle').textContent = isStory
+      ? `第${state.stage}話 vs ${stageInfo().name}`
+      : state.mode === 'cpu' ? `CPU（${LEVEL_NAME[state.level]}）と対戦` : '2人で対戦';
+    $('menuBtn').innerHTML = isStory ? '&#8592; ストーリー' : '&#8592; メニュー';
+    $('newBtn').textContent = isStory ? 'やり直す' : '新しい対局';
     rebuild();
     resultShown = state.over; // 終局済みの対局を開き直した時は結果を再表示しない
     resizeBoard();
@@ -245,8 +262,18 @@
       el.className = 'player ' + (color === 'w' ? 'white' : 'black') +
         (!state.over && game.turn === color ? ' active' : '');
       let name = COLOR_NAME[color];
-      if (state.mode === 'cpu') name = (color === state.human ? 'あなた' : 'CPU') + `（${name}）`;
+      if (state.mode === 'story') name = (color === state.human ? 'きみ' : stageInfo().name) + `（${name}）`;
+      else if (state.mode === 'cpu') name = (color === state.human ? 'あなた' : 'CPU') + `（${name}）`;
       el.querySelector('.name').textContent = name;
+      // ストーリーでは相手の顔を表示（描き直しは相手が変わった時だけ）
+      const av = el.querySelector('.avatar');
+      const avKey = state.mode === 'story' && color !== state.human ? 's' + state.stage : '';
+      if (av.dataset.key !== avKey) {
+        av.dataset.key = avKey;
+        av.innerHTML = avKey ? Story.avatar(avKey, state.stage) : '';
+      }
+      av.hidden = !avKey;
+      el.querySelector('.dot').hidden = !!avKey;
       const enemy = color === 'w' ? 'b' : 'w';
       let caps = '';
       for (const t of ['q', 'r', 'b', 'n', 'p']) caps += (GLYPH[t] + VS).repeat(Math.max(0, counts[enemy][t]));
@@ -268,7 +295,7 @@
     };
     let title;
     if (st.winner) {
-      if (state.mode === 'cpu') title = st.winner === state.human ? 'あなたの勝ち！' : 'CPUの勝ち';
+      if (vsCPU()) title = st.winner === state.human ? 'あなたの勝ち！' : 'CPUの勝ち';
       else title = `${COLOR_NAME[st.winner]}の勝ち！`;
     } else title = '引き分け';
     return { title, text: reasons[st.reason] };
@@ -285,10 +312,10 @@
     }
     let text;
     if (thinking) {
-      text = 'CPUが考え中';
+      text = state.mode === 'story' ? `${stageInfo().name}が考え中` : 'CPUが考え中';
       el.classList.add('thinking');
-    } else if (state.mode === 'cpu') {
-      text = 'あなたの番です';
+    } else if (vsCPU()) {
+      text = state.mode === 'story' ? 'きみの番だ！' : 'あなたの番です';
     } else {
       text = `${COLOR_NAME[game.turn]}の番です`;
     }
@@ -480,9 +507,13 @@
     selected = -1;
     legalFromSelected = [];
     const st = game.status();
+    const byCPU = vsCPU() && Chess.colorOf(m.piece) !== state.human;
     const after = () => {
       fx.play(moveSound(m));
-      if (game.inCheck() && !st.over) fx.play('check');
+      if (game.inCheck() && !st.over) {
+        fx.play('check');
+        if (byCPU && state.mode === 'story') say(stageInfo().check);
+      }
     };
     if (animate) {
       render();
@@ -501,21 +532,30 @@
     save();
     render();
     if (st.over) {
-      if (!resultShown) {
+      if (!resultShown && state.mode === 'story') {
         resultShown = true;
+        storyResult(st);
+      } else if (!resultShown) {
+        resultShown = true;
+        $('resultAv').hidden = true;
+        $('resultClose').hidden = false;
+        $('resultClose').textContent = '盤面を見る';
+        $('resultNew').textContent = 'もう一局';
+        $('resultClose').onclick = () => { $('resultModal').hidden = true; };
+        $('resultNew').onclick = () => { $('resultModal').hidden = true; showMenu(); };
         const r = resultMessage(st);
         $('resultTitle').textContent = r.title;
         $('resultText').textContent = r.text;
         setTimeout(() => {
           $('resultModal').hidden = false;
           let s = 'draw';
-          if (st.winner) s = state.mode === 'cpu' && st.winner !== state.human ? 'lose' : 'win';
+          if (st.winner) s = vsCPU() && st.winner !== state.human ? 'lose' : 'win';
           fx.play(s);
         }, 450);
       }
       return;
     }
-    if (state.mode === 'cpu' && game.turn !== state.human) requestAI();
+    if (vsCPU() && game.turn !== state.human) requestAI();
     if (state.mode === 'pvp') autoFlip();
   }
 
@@ -545,6 +585,204 @@
     flipTimers = [];
     $('board').classList.remove('flipping');
     flipping = false;
+  }
+
+  // ---- ストーリーモード ----
+  const stageInfo = (n) => Story.STAGES[(n || state.stage) - 1];
+
+  function storyBannerUpdate() {
+    const next = Math.min(story.cleared + 1, 10);
+    const all = story.cleared >= 10;
+    $('storyBannerAv').innerHTML = all ? Story.avatar('noirKind', 0) : Story.avatar('s' + next, next);
+    $('storyBannerSub').textContent = all ? '全10話クリア！ 何度でも挑戦できるよ'
+      : story.cleared === 0 ? '影の塔の10人の守り手に挑め！'
+        : `第${next}話「${stageInfo(next).name}」に挑戦中（${story.cleared}/10）`;
+  }
+
+  function showStory() {
+    cancelAI();
+    cancelFlip();
+    cancelDrag();
+    hideBubble();
+    $('menu').hidden = true;
+    $('game').hidden = true;
+    $('story').hidden = false;
+    $('storyCount').textContent = `${story.cleared}/10`;
+    $('endingBtn').hidden = story.cleared < 10;
+    const list = $('storyList');
+    list.innerHTML = '';
+    Story.STAGES.forEach((S, i) => {
+      const n = i + 1;
+      const locked = n > story.cleared + 1;
+      const cleared = n <= story.cleared;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'stage-card' + (locked ? ' locked' : '') + (cleared ? ' cleared' : '') +
+        (n === story.cleared + 1 ? ' next' : '');
+      card.disabled = locked;
+      card.innerHTML = `<span class="stage-av">${Story.avatar('s' + n, n)}</span>
+        <span class="stage-info"><span class="stage-no">第${n}話・${S.where}</span>
+        <strong>${locked ? '？？？' : S.name}</strong><small>${locked ? '前の話をクリアすると挑戦できる' : S.title}</small></span>
+        <span class="stage-badge">${cleared ? 'クリア' : locked ? '&#128274;&#xFE0E;' : '挑戦！'}</span>`;
+      card.addEventListener('click', () => openStage(n));
+      list.appendChild(card);
+    });
+    const next = list.querySelector('.next');
+    if (next) setTimeout(() => next.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
+  }
+
+  function openStage(n) {
+    const S = stageInfo(n);
+    const go = () => playScene(S.intro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => startStoryGame(n));
+    if (n === 1 && !story.prologue) {
+      playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); go(); });
+    } else go();
+  }
+
+  function startStoryGame(n) {
+    cancelAI();
+    cancelFlip();
+    hideBubble();
+    $('resultModal').hidden = true;
+    state = { mode: 'story', stage: n, level: 's' + n, human: 'w', moves: [], flipped: false, over: false };
+    save();
+    showGame();
+  }
+
+  function storyResult(st) {
+    const S = stageInfo();
+    const win = st.winner === state.human;
+    const n = state.stage;
+    if (win && n > story.cleared) { story.cleared = n; saveStory(); }
+    $('resultAv').hidden = false;
+    $('resultAv').innerHTML = Story.avatar('s' + n, n);
+    $('resultTitle').textContent = win ? '勝利！' : st.winner ? '負けてしまった…' : '引き分け…';
+    $('resultText').textContent = win ? `${S.name}に勝った！（${resultMessage(st).text}）`
+      : `${S.name}「${S.lose}」`;
+    $('resultClose').hidden = false;
+    if (win) {
+      $('resultClose').hidden = true;
+      $('resultNew').textContent = 'つづきを見る';
+      $('resultNew').onclick = () => {
+        $('resultModal').hidden = true;
+        playScene(S.outro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => {
+          if (n === 10) playScene(Story.ENDING, { stage: 0, chapter: 'エンディング' }, showStory);
+          else showStory();
+        });
+      };
+    } else {
+      $('resultClose').textContent = 'ストーリーへ';
+      $('resultClose').onclick = () => { $('resultModal').hidden = true; showStory(); };
+      $('resultNew').textContent = 'もう一度挑戦';
+      $('resultNew').onclick = () => startStoryGame(n);
+    }
+    setTimeout(() => {
+      $('resultModal').hidden = false;
+      fx.play(win ? 'win' : st.winner ? 'lose' : 'draw');
+    }, 450);
+  }
+
+  // 相手の吹き出し
+  let bubbleTimer = 0;
+  function say(text) {
+    const b = $('bubble');
+    b.textContent = text;
+    b.hidden = false;
+    b.classList.remove('pop');
+    void b.offsetWidth;
+    b.classList.add('pop');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(hideBubble, 2600);
+  }
+  function hideBubble() {
+    clearTimeout(bubbleTimer);
+    $('bubble').hidden = true;
+  }
+
+  // ---- 会話シーン ----
+  let scene = null;
+  const TYPE_MS = 32;
+
+  function speaker(who, ctx) {
+    if (who === 'p') return { name: Story.PIPI.name, key: 'pipi', stage: 0 };
+    if (who === 'e') return { name: stageInfo(ctx.stage).name, key: 's' + ctx.stage, stage: ctx.stage };
+    if (who === 'k') return { name: 'ノワール', key: 'noirKind', stage: 0 };
+    if (who === 'me') return { name: 'きみ', key: null, me: true };
+    return { name: '', key: null };
+  }
+
+  function playScene(lines, ctx, onDone) {
+    scene = { lines, ctx, onDone, i: -1, typing: false, timer: 0, key: undefined };
+    $('sceneChapter').textContent = ctx.chapter || '';
+    $('scene').hidden = false;
+    $('scene').className = 'scene' + (ctx.stage >= 9 ? ' dark' : '');
+    $('scenePortrait').innerHTML = '';
+    nextLine();
+  }
+
+  function nextLine() {
+    if (!scene) return;
+    if (scene.typing) { finishTyping(); return; }
+    scene.i++;
+    if (scene.i >= scene.lines.length) { endScene(); return; }
+    const [who, text] = scene.lines[scene.i];
+    const sp = speaker(who, scene.ctx);
+    const box = $('scene');
+    box.classList.toggle('narration', !sp.name);
+    box.classList.toggle('me', !!sp.me);
+    $('sceneName').textContent = sp.name;
+    // 話し手が変わったら顔を入れ替える（ナレーションときみの時は直前の顔を薄く残す）
+    const portrait = $('scenePortrait');
+    if (sp.key && sp.key !== scene.key) {
+      scene.key = sp.key;
+      portrait.innerHTML = Story.avatar(sp.key, sp.stage);
+      portrait.classList.remove('enter');
+      void portrait.offsetWidth;
+      portrait.classList.add('enter');
+    }
+    portrait.classList.toggle('dim', !sp.key);
+    const el = $('sceneText');
+    el.textContent = '';
+    scene.full = text;
+    scene.pos = 0;
+    scene.typing = true;
+    clearInterval(scene.timer);
+    scene.timer = setInterval(() => {
+      scene.pos++;
+      el.textContent = text.slice(0, scene.pos);
+      if (scene.pos >= text.length) finishTyping();
+    }, TYPE_MS);
+  }
+
+  function finishTyping() {
+    clearInterval(scene.timer);
+    scene.typing = false;
+    $('sceneText').textContent = scene.full;
+  }
+
+  function endScene() {
+    if (!scene) return;
+    clearInterval(scene.timer);
+    const done = scene.onDone;
+    scene = null;
+    $('scene').hidden = true;
+    if (done) done();
+  }
+
+  function initStory() {
+    $('storyBtn').addEventListener('click', showStory);
+    $('storyBackBtn').addEventListener('click', showMenu);
+    $('prologueBtn').addEventListener('click', () =>
+      playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
+    $('endingBtn').addEventListener('click', () =>
+      playScene(Story.ENDING, { stage: 0, chapter: 'エンディング' }, null));
+    $('scene').addEventListener('click', (e) => {
+      if (e.target.closest('#sceneSkip')) return;
+      fx.vibrate('tap');
+      nextLine();
+    });
+    $('sceneSkip').addEventListener('click', endScene);
+    storyBannerUpdate();
   }
 
   // ---- CPU ----
@@ -591,7 +829,7 @@
     cancelFlip();
     cancelDrag();
     state.moves.pop();
-    if (state.mode === 'cpu') {
+    if (vsCPU()) {
       rebuild();
       while (state.moves.length && game.turn !== state.human) {
         state.moves.pop();
@@ -614,7 +852,7 @@
   }
 
   function initGameControls() {
-    $('menuBtn').addEventListener('click', showMenu);
+    $('menuBtn').addEventListener('click', () => (state.mode === 'story' ? showStory() : showMenu()));
     $('undoBtn').addEventListener('click', undo);
     $('flipBtn').addEventListener('click', () => {
       if (flipping) return;
@@ -623,6 +861,12 @@
       render();
     });
     $('newBtn').addEventListener('click', () => {
+      if (state.mode === 'story') {
+        const restart = () => startStoryGame(state.stage);
+        if (state.over || state.moves.length === 0) restart();
+        else confirmBox('最初からやり直しますか？', restart);
+        return;
+      }
       if (state.over || state.moves.length === 0) { showMenu(); return; }
       confirmBox('対局を終了してメニューに戻りますか？', () => { state.over = true; save(); showMenu(); });
     });
@@ -637,8 +881,6 @@
       $('promoModal').hidden = true;
       clearSelection();
     });
-    $('resultClose').addEventListener('click', () => { $('resultModal').hidden = true; });
-    $('resultNew').addEventListener('click', () => { $('resultModal').hidden = true; showMenu(); });
 
     if (window.ResizeObserver) new ResizeObserver(resizeBoard).observe($('board'));
     else window.addEventListener('resize', resizeBoard);
@@ -680,9 +922,11 @@
   }
 
   load();
+  loadStory();
   buildBoard();
   initMenu();
   initGameControls();
+  initStory();
   initButtonFeedback();
   applyFeedbackSettings();
   initPWA();

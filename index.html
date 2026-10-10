@@ -21,6 +21,14 @@
     <div class="menu-card">
       <h1><span class="logo" aria-hidden="true">&#9822;&#xFE0E;</span>シンプルチェス</h1>
 
+      <button type="button" id="storyBtn" class="story-banner">
+        <span id="storyBannerAv" class="story-banner-av"></span>
+        <span class="story-banner-text"><strong>ストーリーモード</strong><small id="storyBannerSub"></small></span>
+        <span class="chev" aria-hidden="true">&#8250;</span>
+      </button>
+
+      <h2 class="free-head">フリー対戦</h2>
+
       <section>
         <h2>モード</h2>
         <div class="seg" data-name="mode" role="radiogroup">
@@ -69,6 +77,20 @@
     </div>
   </main>
 
+  <!-- ストーリー: ステージ選択 -->
+  <main id="story" class="screen" hidden>
+    <header class="topbar">
+      <button type="button" id="storyBackBtn" class="icon-btn">&#8592; メニュー</button>
+      <div class="title">ストーリー「影の塔」</div>
+      <div id="storyCount" class="story-count"></div>
+    </header>
+    <div id="storyList" class="story-list"></div>
+    <div class="story-extra">
+      <button type="button" id="prologueBtn" class="btn small">プロローグを見る</button>
+      <button type="button" id="endingBtn" class="btn small" hidden>エンディングを見る</button>
+    </div>
+  </main>
+
   <!-- 対局画面 -->
   <main id="game" class="screen" hidden>
     <header class="topbar">
@@ -82,12 +104,15 @@
     <div class="layout">
       <div class="board-area">
         <div class="player" id="playerTop">
-          <span class="dot"></span><span class="name"></span>
+          <span class="avatar" hidden></span><span class="dot"></span><span class="name"></span>
           <span class="captured"></span><span class="adv"></span>
         </div>
-        <div id="board" role="grid" aria-label="チェス盤"></div>
+        <div class="board-wrap">
+          <div id="board" role="grid" aria-label="チェス盤"></div>
+          <div id="bubble" class="bubble" hidden></div>
+        </div>
         <div class="player" id="playerBottom">
-          <span class="dot"></span><span class="name"></span>
+          <span class="avatar" hidden></span><span class="dot"></span><span class="name"></span>
           <span class="captured"></span><span class="adv"></span>
         </div>
       </div>
@@ -104,6 +129,18 @@
     </div>
   </main>
 
+  <!-- ストーリーの会話シーン -->
+  <div id="scene" class="scene" hidden>
+    <div id="sceneChapter" class="scene-chapter"></div>
+    <button type="button" id="sceneSkip" class="scene-skip">スキップ &#8250;&#8250;</button>
+    <div class="scene-stage"><div id="scenePortrait" class="scene-portrait"></div></div>
+    <div class="scene-box">
+      <div id="sceneName" class="scene-name"></div>
+      <p id="sceneText" class="scene-text"></p>
+      <span class="scene-next" aria-hidden="true">&#9660;</span>
+    </div>
+  </div>
+
   <!-- 成り駒選択 -->
   <div id="promoModal" class="modal" hidden>
     <div class="modal-card">
@@ -116,6 +153,7 @@
   <!-- 結果表示 -->
   <div id="resultModal" class="modal" hidden>
     <div class="modal-card">
+      <div id="resultAv" class="result-av" hidden></div>
       <h3 id="resultTitle"></h3>
       <p id="resultText"></p>
       <div class="modal-actions">
@@ -138,6 +176,7 @@
 
   <script src="chess.js"></script>
   <script src="feedback.js"></script>
+  <script src="story.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

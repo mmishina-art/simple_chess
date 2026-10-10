@@ -1,6 +1,6 @@
 /* シンプルチェス: Service Worker（オフライン対応）
  * ファイルを更新したら CACHE のバージョンを上げること。 */
-const CACHE = 'simple-chess-v4';
+const CACHE = 'simple-chess-v5';
 const ASSETS = [
   './',
   'index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   'ai.js',
   'app.js',
   'feedback.js',
+  'story.js',
   'manifest.webmanifest',
   'icons/icon.svg',
   'icons/icon-192.png',

@@ -242,7 +242,18 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
   const LEVELS = {
     1: { depth: 1, useQ: false, noise: 150, randomRate: 0.2 }, // やさしい
     2: { depth: 3, useQ: true, noise: 25, randomRate: 0 },     // ふつう
-    3: { depth: 8, timeMs: 2500 }                               // つよい
+    3: { depth: 8, timeMs: 2500 },                              // つよい
+    // ストーリーモード（第1話〜第10話）
+    s1: { depth: 1, useQ: false, noise: 400, randomRate: 0.45 },
+    s2: { depth: 1, useQ: false, noise: 200, randomRate: 0.25 },
+    s3: { depth: 1, useQ: true, noise: 120, randomRate: 0.12 },
+    s4: { depth: 2, useQ: true, noise: 90, randomRate: 0.06 },
+    s5: { depth: 2, useQ: true, noise: 40, randomRate: 0.02 },
+    s6: { depth: 3, useQ: true, noise: 50, randomRate: 0 },
+    s7: { depth: 3, useQ: true, noise: 15, randomRate: 0 },
+    s8: { depth: 8, timeMs: 900 },
+    s9: { depth: 8, timeMs: 2000 },
+    s10: { depth: 10, timeMs: 3500 }
   };
 
   function think(fen, uciMoves, level) {
