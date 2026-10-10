@@ -1,0 +1,152 @@
+:root {
+  --bg: #1f2a24;
+  --panel: #2b3830;
+  --panel-2: #36463c;
+  --text: #f1efe6;
+  --muted: #b5bdb3;
+  --accent: #e0b04c;
+  --accent-text: #2a2008;
+  --light: #eedcb5;
+  --dark: #b07d4f;
+  --sel: rgba(246, 230, 80, .65);
+  --last: rgba(205, 210, 90, .5);
+  --check: radial-gradient(circle, rgba(255, 40, 40, .95) 0%, rgba(230, 20, 20, .6) 40%, rgba(200, 0, 0, 0) 75%);
+  --hint: rgba(20, 30, 20, .35);
+  --sq: 40px;
+  --board: min(94vw, calc(100dvh - 300px), 560px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  overscroll-behavior: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-user-select: none;
+  user-select: none;
+}
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* ---- メニュー ---- */
+#menu { min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.menu-card {
+  width: 100%; max-width: 420px; background: var(--panel); border-radius: 18px;
+  padding: 24px 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+.menu-card h1 { margin: 0 0 20px; font-size: 1.6rem; text-align: center; letter-spacing: .05em; }
+.logo { font-family: "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", serif; color: var(--accent); margin-right: .3em; }
+.menu-card h2 { font-size: .9rem; color: var(--muted); margin: 18px 0 8px; font-weight: 600; }
+.seg { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: 12px; }
+.seg button {
+  flex: 1; border: 0; background: transparent; padding: 11px 4px; border-radius: 9px;
+  font-size: .95rem; color: var(--muted); transition: background .15s, color .15s;
+}
+.seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+.btn {
+  border: 0; border-radius: 12px; padding: 12px 16px; background: var(--panel-2);
+  font-size: 1rem; transition: filter .15s, transform .05s;
+}
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.primary { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+.btn.small { padding: 8px 14px; font-size: .9rem; }
+#startBtn, #resumeBtn { display: block; width: 100%; margin-top: 22px; font-size: 1.1rem; padding: 14px; }
+#resumeBtn { margin-top: 10px; }
+.hint { color: var(--muted); font-size: .8rem; text-align: center; margin: 16px 0 0; line-height: 1.5; }
+
+/* ---- 対局画面 ---- */
+#game { display: flex; flex-direction: column; min-height: 100%; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+.icon-btn { border: 0; background: var(--panel); border-radius: 10px; padding: 8px 12px; font-size: .9rem; }
+.title { color: var(--muted); font-size: .9rem; }
+
+.layout { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 12px 12px; }
+.board-area { width: var(--board); }
+
+.player { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 4px 2px; font-size: .95rem; }
+.player .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #888; flex: none; }
+.player.white .dot { background: #fff; }
+.player.black .dot { background: #111; border-color: #aaa; }
+.player.active .name { color: var(--accent); font-weight: 700; }
+.player .captured {
+  font-family: "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+  font-size: 1.05rem; letter-spacing: -.12em; color: var(--muted); overflow: hidden; white-space: nowrap; flex: 1;
+}
+.player .adv { color: var(--muted); font-size: .85rem; }
+
+#board {
+  width: var(--board); height: var(--board);
+  display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+  border-radius: 6px; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, .4);
+  touch-action: manipulation;
+}
+.sq { position: relative; display: flex; align-items: center; justify-content: center; border: 0; padding: 0; cursor: pointer; }
+.sq.light { background: var(--light); }
+.sq.dark { background: var(--dark); }
+.sq.last::before, .sq.sel::before { content: ""; position: absolute; inset: 0; }
+.sq.last::before { background: var(--last); }
+.sq.sel::before { background: var(--sel); }
+.sq.check { background-image: var(--check); }
+.sq.target::after {
+  content: ""; position: absolute; width: 30%; height: 30%; border-radius: 50%; background: var(--hint); pointer-events: none;
+}
+.sq.target.capture::after { width: 92%; height: 92%; background: transparent; border: calc(var(--sq) * .08) solid var(--hint); }
+.coord { position: absolute; font-size: calc(var(--sq) * .2); font-weight: 700; pointer-events: none; line-height: 1; }
+.coord.rank { top: 3px; left: 3px; }
+.coord.file { bottom: 2px; right: 3px; }
+.sq.light .coord { color: var(--dark); }
+.sq.dark .coord { color: var(--light); }
+
+.piece {
+  position: relative; z-index: 1; pointer-events: none;
+  font-family: "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif;
+  font-size: calc(var(--sq) * .82); line-height: 1;
+  transition: transform .12s;
+}
+.piece.w { color: #fff; -webkit-text-stroke: calc(var(--sq) * .028) #222; paint-order: stroke fill; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+.piece.b { color: #161616; -webkit-text-stroke: calc(var(--sq) * .012) #000; text-shadow: 0 1px 1px rgba(255, 255, 255, .25); }
+.sq.sel .piece { transform: scale(1.1); }
+
+.side { width: var(--board); display: flex; flex-direction: column; gap: 10px; }
+.status {
+  background: var(--panel); border-radius: 12px; padding: 10px 14px; text-align: center;
+  font-weight: 700; min-height: 44px; display: flex; align-items: center; justify-content: center;
+}
+.status.alert { color: #ff8a7a; }
+.status.thinking::after { content: ""; display: inline-block; width: 1em; text-align: left; animation: dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.controls .btn { padding: 11px 4px; font-size: .92rem; }
+.moves {
+  background: var(--panel); border-radius: 12px; padding: 8px 12px; max-height: 140px; overflow-y: auto;
+  font-size: .9rem; display: grid; grid-template-columns: 2.6em 1fr 1fr; row-gap: 2px; align-content: start;
+  -webkit-user-select: text; user-select: text;
+}
+.moves:empty::before { content: "棋譜はここに表示されます"; color: var(--muted); grid-column: 1 / -1; }
+.moves .no { color: var(--muted); }
+.moves .mv.cur { color: var(--accent); font-weight: 700; }
+
+/* 横長画面: 盤の横にパネル */
+@media (min-aspect-ratio: 5/4) and (min-width: 700px) {
+  :root { --board: min(calc(100dvh - 130px), calc(100vw - 380px), 640px); }
+  .layout { flex-direction: row; justify-content: center; align-items: flex-start; gap: 24px; }
+  .side { width: 300px; margin-top: 38px; }
+  .moves { max-height: calc(var(--board) - 140px); }
+}
+
+/* ---- モーダル ---- */
+.modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
+.modal-card { background: var(--panel); border-radius: 16px; padding: 20px; width: 100%; max-width: 340px; text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+.modal-card h3 { margin: 0 0 10px; font-size: 1.25rem; }
+.modal-card p { margin: 0 0 18px; color: var(--muted); line-height: 1.6; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions .btn { flex: 1; }
+.promo-choices { display: flex; justify-content: center; gap: 8px; margin: 12px 0 16px; }
+.promo-choices button {
+  width: 64px; height: 64px; border: 0; border-radius: 12px; background: var(--light);
+  display: flex; align-items: center; justify-content: center; --sq: 64px;
+}
+.promo-choices button:active { background: var(--accent); }
