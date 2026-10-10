@@ -4,6 +4,7 @@
 
   const STORAGE_KEY = 'simple-chess-state-v1';
   const STORY_KEY = 'simple-chess-story-v1';
+  const DEBUG_KEY = 'simple-chess-debug';
   const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
   const VS = '︎'; // 絵文字ではなく文字として表示させる
   const LEVEL_NAME = { 1: 'やさしい', 2: 'ふつう', 3: 'つよい' };
@@ -40,6 +41,30 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, state })); } catch (e) { /* 保存できなくても続行 */ }
   }
   let story = { cleared: 0, prologue: false };
+
+  // ---- デバッグモード（タイトルを5回タップ、または ?debug=1 で切替） ----
+  let debug = false;
+  function setDebug(on) {
+    debug = on;
+    try { if (on) localStorage.setItem(DEBUG_KEY, '1'); else localStorage.removeItem(DEBUG_KEY); } catch (e) { /* 無視 */ }
+  }
+  function initDebug() {
+    try { debug = localStorage.getItem(DEBUG_KEY) === '1'; } catch (e) { /* 無視 */ }
+    const q = new URLSearchParams(location.search).get('debug');
+    if (q !== null) setDebug(q !== '0');
+    let taps = 0, last = 0;
+    document.querySelector('#menu h1').addEventListener('click', () => {
+      const now = Date.now();
+      taps = now - last < 600 ? taps + 1 : 1;
+      last = now;
+      if (taps >= 5) {
+        taps = 0;
+        setDebug(!debug);
+        fx.play(debug ? 'win' : 'draw');
+        $('storyBannerSub').textContent = debug ? 'デバッグモード ON：全話を確認できます' : 'デバッグモード OFF';
+      }
+    });
+  }
   function saveStory() {
     try { localStorage.setItem(STORY_KEY, JSON.stringify(story)); } catch (e) { /* 無視 */ }
   }
@@ -608,12 +633,14 @@
     $('game').hidden = true;
     $('story').hidden = false;
     $('storyCount').textContent = `${story.cleared}/10`;
-    $('endingBtn').hidden = story.cleared < 10;
+    $('endingBtn').hidden = !debug && story.cleared < 10;
+    $('resetStoryBtn').hidden = !debug;
+    $('debugBadge').hidden = !debug;
     const list = $('storyList');
     list.innerHTML = '';
     Story.STAGES.forEach((S, i) => {
       const n = i + 1;
-      const locked = n > story.cleared + 1;
+      const locked = !debug && n > story.cleared + 1;
       const cleared = n <= story.cleared;
       const card = document.createElement('button');
       card.type = 'button';
@@ -624,7 +651,7 @@
         <span class="stage-info"><span class="stage-no">第${n}話・${S.where}</span>
         <strong>${locked ? '？？？' : S.name}</strong><small>${locked ? '前の話をクリアすると挑戦できる' : S.title}</small></span>
         <span class="stage-badge">${cleared ? 'クリア' : locked ? '&#128274;&#xFE0E;' : '挑戦！'}</span>`;
-      card.addEventListener('click', () => openStage(n));
+      card.addEventListener('click', () => (debug ? openDebug(n) : openStage(n)));
       list.appendChild(card);
     });
     const next = list.querySelector('.next');
@@ -637,6 +664,31 @@
     if (n === 1 && !story.prologue) {
       playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); go(); });
     } else go();
+  }
+
+  function openDebug(n) {
+    const S = stageInfo(n);
+    const chapter = `第${n}話　${S.title} ${S.name}`;
+    $('debugAv').innerHTML = Story.avatar('s' + n, n);
+    $('debugTitle').textContent = chapter;
+    $('debugLose').textContent = S.lose;
+    $('debugCheck').textContent = S.check;
+    const modal = $('debugModal');
+    modal.hidden = false;
+    modal.onclick = (e) => {
+      const act = e.target.closest('[data-act]');
+      if (!act) return;
+      modal.hidden = true;
+      const a = act.dataset.act;
+      if (a === 'intro') playScene(S.intro, { stage: n, chapter }, () => openDebug(n));
+      if (a === 'outro') playScene(S.outro, { stage: n, chapter }, () => openDebug(n));
+      if (a === 'play') startStoryGame(n);
+      if (a === 'clear') {
+        story.cleared = Math.max(story.cleared, n);
+        saveStory();
+        showStory();
+      }
+    };
   }
 
   function startStoryGame(n) {
@@ -782,6 +834,11 @@
       nextLine();
     });
     $('sceneSkip').addEventListener('click', endScene);
+    $('resetStoryBtn').addEventListener('click', () => confirmBox('ストーリーの進行をリセットしますか？', () => {
+      story = { cleared: 0, prologue: false };
+      saveStory();
+      showStory();
+    }));
     storyBannerUpdate();
   }
 
@@ -927,6 +984,7 @@
   initMenu();
   initGameControls();
   initStory();
+  initDebug();
   initButtonFeedback();
   applyFeedbackSettings();
   initPWA();

@@ -216,7 +216,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stage-badge { font-size: .8rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: rgba(255, 255, 255, .08); white-space: nowrap; }
 .stage-card.cleared .stage-badge { background: #2f6b43; color: #d6ffe2; }
 .stage-card.next .stage-badge { background: var(--accent); color: var(--accent-text); }
-.story-extra { display: flex; justify-content: center; gap: 10px; padding: 4px 12px 24px; }
+.story-extra { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 4px 12px 24px; }
 
 .player .avatar { width: 28px; height: 28px; flex: none; }
 
@@ -262,3 +262,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .scene-text { margin: 0; font-size: 1.05rem; line-height: 1.75; color: #fff; white-space: pre-wrap; }
 .scene-next { position: absolute; right: 16px; bottom: 8px; font-size: .8rem; color: var(--accent); animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: .2; } }
+
+/* ---- デバッグモード ---- */
+.debug-badge { background: #ff4d6d; color: #fff; font-size: .7rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: .08em; }
+.debug-card { max-width: 380px; }
+.debug-lines { text-align: left; margin: 0 0 14px; font-size: .88rem; }
+.debug-lines dt { color: var(--muted); font-size: .75rem; margin-top: 8px; }
+.debug-lines dd { margin: 2px 0 0; }
+.debug-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.debug-actions .btn { padding: 11px 6px; font-size: .9rem; }
+.story-extra .btn { white-space: nowrap; }

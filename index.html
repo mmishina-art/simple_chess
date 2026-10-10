@@ -82,12 +82,14 @@
     <header class="topbar">
       <button type="button" id="storyBackBtn" class="icon-btn">&#8592; メニュー</button>
       <div class="title">ストーリー「影の塔」</div>
+      <span id="debugBadge" class="debug-badge" hidden>DEBUG</span>
       <div id="storyCount" class="story-count"></div>
     </header>
     <div id="storyList" class="story-list"></div>
     <div class="story-extra">
       <button type="button" id="prologueBtn" class="btn small">プロローグを見る</button>
       <button type="button" id="endingBtn" class="btn small" hidden>エンディングを見る</button>
+      <button type="button" id="resetStoryBtn" class="btn small" hidden>進行をリセット</button>
     </div>
   </main>
 
@@ -138,6 +140,25 @@
       <div id="sceneName" class="scene-name"></div>
       <p id="sceneText" class="scene-text"></p>
       <span class="scene-next" aria-hidden="true">&#9660;</span>
+    </div>
+  </div>
+
+  <!-- デバッグ: 各話の確認 -->
+  <div id="debugModal" class="modal" hidden>
+    <div class="modal-card debug-card">
+      <div id="debugAv" class="result-av"></div>
+      <h3 id="debugTitle"></h3>
+      <dl class="debug-lines">
+        <dt>負けたとき</dt><dd id="debugLose"></dd>
+        <dt>王手のとき</dt><dd id="debugCheck"></dd>
+      </dl>
+      <div class="debug-actions">
+        <button type="button" class="btn" data-act="intro">開始前の会話</button>
+        <button type="button" class="btn" data-act="outro">勝利後の会話</button>
+        <button type="button" class="btn" data-act="play">対戦する</button>
+        <button type="button" class="btn" data-act="clear">クリア扱いにする</button>
+      </div>
+      <button type="button" class="btn small" data-act="close">閉じる</button>
     </div>
   </div>
 
