@@ -58,11 +58,28 @@
   // ---- BGM（8bit風の自作曲をその場で演奏） ----
   // 1トークン = 8分音符。'-' は前の音をのばす、'.' は休符。'|' は小節の区切り（読みやすさ用）
   const TRACKS = {
-    story: {
-      bpm: 100,
+    // タイトル（メニュー）: 冒険の始まりを感じる堂々としたテーマ
+    title: {
+      bpm: 112,
       voices: [
-        { type: 'square', gain: 0.045, notes: 'E5 - G5 - A5 - G5 - | E5 - D5 - C5 - - - | D5 - E5 - G5 - E5 - | D5 - - - - - . . | E5 - G5 - A5 - C6 - | B5 - A5 - G5 - - - | A5 - G5 - E5 - D5 - | C5 - - - - - . .' },
-        { type: 'triangle', gain: 0.09, notes: 'C3 - - - G3 - - - | A2 - - - E3 - - - | F2 - - - C3 - - - | G2 - - - - - - - | C3 - - - G3 - - - | E3 - - - A2 - - - | F2 - - - G2 - - - | C3 - - - - - - -' }
+        { type: 'square', gain: 0.045, notes: 'G4 - B4 - D5 - G5 - | F#5 - - E5 D5 - - - | E5 - C5 - A4 - C5 - | D5 - - - - - . . | G4 - B4 - D5 - G5 - | A5 - G5 - F#5 - E5 - | D5 - B4 - C5 - A4 - | G4 - - - - - . .' },
+        { type: 'triangle', gain: 0.09, notes: 'G2 - D3 - G2 - D3 - | D2 - A2 - D2 - A2 - | C3 - G2 - A2 - E2 - | D2 - A2 - D2 - D3 - | G2 - D3 - G2 - D3 - | C3 - G2 - D3 - A2 - | B2 - G2 - C3 - D3 - | G2 - D3 - G2 - - -' }
+      ]
+    },
+    // ステージ選択: 軽快に歩いていくような曲
+    map: {
+      bpm: 108,
+      voices: [
+        { type: 'square', gain: 0.04, notes: 'F5 . C5 . A4 . C5 . | D5 . C5 . A4 - - - | Bb4 . D5 . F5 . D5 . | C5 - - - - - . . | F5 . C5 . A4 . C5 . | D5 . F5 . G5 - - - | A5 . G5 . F5 . E5 . | F5 - - - - - . .' },
+        { type: 'triangle', gain: 0.09, notes: 'F2 . C3 . F2 . C3 . | D2 . A2 . D2 . A2 . | Bb2 . F2 . Bb2 . F2 . | C3 . G2 . C3 . G2 .' }
+      ]
+    },
+    // 会話中: せりふの邪魔をしない、ゆったりした曲
+    talk: {
+      bpm: 84,
+      voices: [
+        { type: 'triangle', gain: 0.07, notes: 'B4 - - - G4 - - - | A4 - B4 - D5 - - - | C5 - - - B4 - - - | A4 - - - - - - - | G4 - - - E4 - - - | F#4 - G4 - A4 - - - | B4 - A4 - G4 - F#4 - | G4 - - - - - - -' },
+        { type: 'triangle', gain: 0.07, notes: 'G2 - - - D3 - - - | D2 - - - A2 - - - | C3 - - - G2 - - - | D2 - - - A2 - - - | E2 - - - B2 - - - | D2 - - - A2 - - - | C3 - - - D3 - - - | G2 - - - D3 - - -' }
       ]
     },
     battle: {

@@ -18,6 +18,8 @@
 
   const $ = (id) => document.getElementById(id);
   const vsCPU = () => state.mode === 'cpu' || state.mode === 'story';
+  let music = null;
+  function setMusic(name) { music = name; fx.bgm(name); }
   const fx = window.Feedback;
 
   // ---- 状態 ----
@@ -135,7 +137,7 @@
     $('game').hidden = true;
     $('story').hidden = true;
     $('menu').hidden = false;
-    fx.bgm(null);
+    setMusic('title');
     syncMenu();
     storyBannerUpdate();
   }
@@ -165,7 +167,7 @@
       : state.mode === 'cpu' ? `CPU（${LEVEL_NAME[state.level]}）と対戦` : '2人で対戦';
     $('menuBtn').innerHTML = isStory ? '&#8592; ストーリー' : '&#8592; メニュー';
     $('newBtn').textContent = isStory ? 'やり直す' : '新しい対局';
-    fx.bgm(isStory && !state.over ? (state.stage >= 9 ? 'boss' : 'battle') : null);
+    setMusic(isStory && !state.over ? (state.stage >= 9 ? 'boss' : 'battle') : null);
     rebuild();
     resultShown = state.over; // 終局済みの対局を開き直した時は結果を再表示しない
     resizeBoard();
@@ -635,7 +637,7 @@
     $('menu').hidden = true;
     $('game').hidden = true;
     $('story').hidden = false;
-    fx.bgm('story');
+    setMusic('map');
     $('storyCount').textContent = `${story.cleared}/10`;
     $('endingBtn').hidden = !debug && story.cleared < 10;
     $('resetStoryBtn').hidden = !debug;
@@ -706,7 +708,7 @@
   }
 
   function storyResult(st) {
-    fx.bgm(null);
+    setMusic(null);
     const S = stageInfo();
     const win = st.winner === state.human;
     const n = state.stage;
@@ -776,11 +778,11 @@
   }
 
   function playScene(lines, ctx, onDone) {
-    scene = { lines, ctx, onDone, i: -1, typing: false, timer: 0, key: undefined };
+    scene = { lines, ctx, onDone, i: -1, typing: false, timer: 0, key: undefined, prevMusic: music };
     $('sceneChapter').textContent = ctx.chapter || '';
     $('scene').hidden = false;
     $('scene').className = 'scene' + (ctx.stage >= 9 ? ' dark' : '');
-    fx.bgm(ctx.stage >= 9 ? 'boss' : 'story');
+    setMusic(ctx.stage >= 9 ? 'boss' : 'talk');
     $('scenePortrait').innerHTML = '';
     nextLine();
   }
@@ -832,8 +834,10 @@
     if (!scene) return;
     clearInterval(scene.timer);
     const done = scene.onDone;
+    const prev = scene.prevMusic;
     scene = null;
     $('scene').hidden = true;
+    setMusic(prev); // 会話の前の曲に戻す（次の画面が自分の曲に切り替える）
     if (done) done();
   }
 
@@ -1040,5 +1044,6 @@
   initDebug();
   initButtonFeedback();
   applyFeedbackSettings();
+  setMusic('title');
   initPWA();
 })();
