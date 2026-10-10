@@ -55,7 +55,7 @@
     const q = new URLSearchParams(location.search).get('debug');
     if (q !== null) setDebug(q !== '0');
     let taps = 0, last = 0;
-    document.querySelector('#menu h1').addEventListener('click', () => {
+    $('titleLogo').addEventListener('click', () => {
       const now = Date.now();
       taps = now - last < 600 ? taps + 1 : 1;
       last = now;
@@ -107,6 +107,7 @@
     });
     $('startBtn').addEventListener('click', () => startGame());
     $('resumeBtn').addEventListener('click', () => showGame());
+    $('menuBackBtn').addEventListener('click', showTitle);
     $('hapticSection').hidden = !fx.hapticSupported;
     syncMenu();
   }
@@ -126,7 +127,7 @@
     cpuBox.classList.toggle('inactive', cpuOff);
     cpuBox.querySelectorAll('[role=radiogroup]').forEach((g) => g.setAttribute('aria-disabled', cpuOff));
     cpuBox.querySelectorAll('button').forEach((b) => { b.disabled = cpuOff; });
-    $('resumeBtn').hidden = !(state && state.moves.length > 0 && !state.over);
+    $('resumeBtn').hidden = !(state && state.mode !== 'story' && state.moves.length > 0 && !state.over);
   }
 
   function showMenu() {
@@ -136,10 +137,60 @@
     hideBubble();
     $('game').hidden = true;
     $('story').hidden = true;
+    $('title').hidden = true;
     $('menu').hidden = false;
     setMusic('title');
     syncMenu();
     storyBannerUpdate();
+  }
+
+  // ---- タイトル画面 ----
+  function canContinue() {
+    return !!(state && state.moves.length > 0 && !state.over);
+  }
+
+  function showTitle() {
+    cancelAI();
+    cancelFlip();
+    cancelDrag();
+    hideBubble();
+    $('game').hidden = true;
+    $('story').hidden = true;
+    $('menu').hidden = true;
+    $('title').hidden = false;
+    setMusic('title');
+    updateTitle();
+  }
+
+  function updateTitle() {
+    const cont = canContinue();
+    $('continueBtn').hidden = !cont;
+    if (cont) {
+      $('continueSub').textContent = state.mode === 'story'
+        ? `第${state.stage}話 vs ${stageInfo().name}（${state.moves.length}手目）`
+        : `${state.mode === 'cpu' ? 'CPU対戦' : '2人対戦'}（${state.moves.length}手目）`;
+    }
+    storyBannerUpdate();
+    setCursor(document.querySelector('.title-menu .rpg-item:not([hidden])'));
+  }
+
+  // RPG風カーソル（▶）
+  function setCursor(item) {
+    document.querySelectorAll('.title-menu .rpg-item').forEach((b) => b.classList.toggle('cur', b === item));
+  }
+
+  function initTitle() {
+    document.querySelectorAll('.title-menu .rpg-item').forEach((b) => {
+      b.addEventListener('pointerenter', () => setCursor(b));
+      b.addEventListener('focus', () => setCursor(b));
+      b.addEventListener('pointerdown', () => setCursor(b));
+    });
+    $('continueBtn').addEventListener('click', () => showGame());
+    $('freeBtn').addEventListener('click', showMenu);
+    $('settingsBtn').addEventListener('click', () => { syncMenu(); $('settingsModal').hidden = false; });
+    $('settingsClose').addEventListener('click', () => { $('settingsModal').hidden = true; });
+    $('settingsModal').addEventListener('click', (e) => { if (e.target === $('settingsModal')) $('settingsModal').hidden = true; });
+    updateTitle();
   }
 
   function startGame() {
@@ -158,6 +209,7 @@
   }
 
   function showGame() {
+    $('title').hidden = true;
     $('menu').hidden = true;
     $('story').hidden = true;
     $('game').hidden = false;
@@ -634,6 +686,7 @@
     cancelFlip();
     cancelDrag();
     hideBubble();
+    $('title').hidden = true;
     $('menu').hidden = true;
     $('game').hidden = true;
     $('story').hidden = false;
@@ -843,7 +896,7 @@
 
   function initStory() {
     $('storyBtn').addEventListener('click', showStory);
-    $('storyBackBtn').addEventListener('click', showMenu);
+    $('storyBackBtn').addEventListener('click', showTitle);
     $('prologueBtn').addEventListener('click', () =>
       playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
     $('endingBtn').addEventListener('click', () =>
@@ -1041,6 +1094,7 @@
   initMenu();
   initGameControls();
   initStory();
+  initTitle();
   initDebug();
   initButtonFeedback();
   applyFeedbackSettings();

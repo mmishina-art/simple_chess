@@ -282,3 +282,94 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .update-bar span { flex: 1; font-weight: 700; font-size: .92rem; }
 .update-bar .btn { white-space: nowrap; }
+
+/* ---- タイトル画面（ファンタジーRPG風） ---- */
+.title-screen {
+  position: relative; min-height: 100%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(#0b0a24 0%, #1d1a4a 55%, #3a2552 100%);
+}
+.sky { position: absolute; inset: 0; pointer-events: none; }
+.stars {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, #fff, transparent),
+    radial-gradient(1px 1px at 90px 80px, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 150px 20px, #fffbe0, transparent),
+    radial-gradient(1px 1px at 60px 140px, #fff, transparent),
+    radial-gradient(1px 1px at 180px 120px, #cfe3ff, transparent);
+  background-size: 200px 170px;
+  animation: twinkle 3.5s ease-in-out infinite;
+}
+.stars2 { background-position: 70px 60px; background-size: 260px 210px; animation-delay: 1.7s; opacity: .7; }
+@keyframes twinkle { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+.moon {
+  position: absolute; top: 9%; right: 12%; width: 64px; height: 64px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fffbe6, #f1dfa0 60%, #d9be6e);
+  box-shadow: 0 0 40px 12px rgba(255, 236, 170, .25);
+}
+.land { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 26%; }
+/* 塔は画面左端に少しはみ出して立たせ、赤い窓がロゴと重ならないようにする（窓の中心が常に左から36px） */
+.tower { position: absolute; bottom: 3%; height: 72vh; width: 18vh; left: calc(36px - 9vh); }
+.glow-win { animation: winglow 2.4s ease-in-out infinite; }
+@keyframes winglow { 0%, 100% { opacity: .55; } 50% { opacity: 1; filter: drop-shadow(0 0 4px #ff2a4f); } }
+
+.title-inner {
+  position: relative; z-index: 1; width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; align-items: center; gap: 26px;
+  padding: calc(env(safe-area-inset-top) + 24px) 20px calc(env(safe-area-inset-bottom) + 28px);
+}
+.logo-block { text-align: center; cursor: default; }
+.emblem {
+  font-family: "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+  font-size: 72px; line-height: 1; color: #f2c14e;
+  filter: drop-shadow(0 0 14px rgba(242, 193, 78, .55));
+  animation: float 3.2s ease-in-out infinite;
+}
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.logo-text { margin: 8px 0 0; display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.logo-small, .logo-big {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; font-weight: 900;
+  background: linear-gradient(#fffbe0 0%, #f6d77a 45%, #c8902a 70%, #f2c14e 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 #4a2a08) drop-shadow(0 0 10px rgba(255, 210, 120, .35));
+}
+.logo-small { font-size: 1.35rem; letter-spacing: .25em; }
+.logo-big { font-size: 3.4rem; letter-spacing: .18em; margin-top: 2px; }
+.logo-sub { margin-top: 10px; color: #d9cfff; font-size: .9rem; letter-spacing: .12em; text-shadow: 0 0 8px rgba(140, 110, 255, .6); }
+
+/* ドラクエ風ウィンドウ */
+.rpg-window {
+  background: linear-gradient(#141a4a, #0a0e2e);
+  border: 3px solid #fff; border-radius: 12px;
+  box-shadow: 0 0 0 3px #0a0e2e, 0 10px 30px rgba(0, 0, 0, .55);
+}
+.title-menu { width: 100%; padding: 10px 8px; display: flex; flex-direction: column; }
+.rpg-item {
+  position: relative; display: flex; align-items: center; gap: 10px; width: 100%;
+  border: 0; background: transparent; color: #fff; text-align: left;
+  padding: 11px 12px 11px 34px; border-radius: 8px; font-size: 1.12rem; font-weight: 700; letter-spacing: .06em;
+}
+.rpg-item::before {
+  content: "\25B6\FE0E"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: .85rem; color: #fff; opacity: 0;
+}
+.rpg-item.cur::before { opacity: 1; animation: blink 0.9s steps(2) infinite; }
+.rpg-item.cur { background: rgba(255, 255, 255, .07); }
+.rpg-item:active { background: rgba(255, 255, 255, .14); }
+.rpg-label { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rpg-label small { font-size: .74rem; font-weight: 400; color: #b9c2ff; letter-spacing: .02em; }
+.rpg-av { width: 40px; height: 40px; flex: none; }
+.rpg-av svg { width: 100%; height: 100%; display: block; }
+.title-hint { color: #c9c3ea; margin: 0; }
+
+/* フリー対戦メニューの見出し */
+.menu-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.menu-head h1 { margin: 0; font-size: 1.35rem; }
+
+/* せってい */
+.settings-card { color: #fff; text-align: left; }
+.settings-card h3 { text-align: center; letter-spacing: .2em; }
+.settings-card h2 { font-size: .85rem; color: #b9c2ff; margin: 14px 0 6px; }
+.settings-card .seg { background: rgba(0, 0, 0, .35); }
+.settings-card #settingsClose { display: block; width: 100%; margin-top: 18px; }
