@@ -717,6 +717,17 @@
     if (next) setTimeout(() => next.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
   }
 
+  // タイトルから「ストーリーモード」: 初めての時はプロローグ → 第1話へそのまま進む
+  function enterStory() {
+    if (!story.prologue && story.cleared === 0) {
+      playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => {
+        story.prologue = true;
+        saveStory();
+        openStage(1);
+      });
+    } else showStory();
+  }
+
   function openStage(n) {
     const S = stageInfo(n);
     const go = () => playScene(S.intro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => startStoryGame(n));
@@ -895,7 +906,7 @@
   }
 
   function initStory() {
-    $('storyBtn').addEventListener('click', showStory);
+    $('storyBtn').addEventListener('click', enterStory);
     $('storyBackBtn').addEventListener('click', showTitle);
     $('prologueBtn').addEventListener('click', () =>
       playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
