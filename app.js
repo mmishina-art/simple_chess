@@ -10,6 +10,8 @@
   const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9 };
   const CPU_MIN_DELAY = 450;
   const SLIDE_MS = 170;      // 駒が滑る時間
+  const FLIP_DELAY_MS = 450; // 2人対戦: 指した手を見せてから盤を回すまでの間
+  const FLIP_MS = 480;       // 盤が回転する時間（style.css と合わせる）
   const DRAG_START_PX = 6;   // これ以上動いたらドラッグ扱い
 
   const $ = (id) => document.getElementById(id);
@@ -28,6 +30,8 @@
   let resultShown = false;
   let drag = null;
   let animating = 0;
+  let flipping = false;
+  let flipTimers = [];
 
   // ---- 保存 ----
   function save() {
@@ -82,13 +86,14 @@
     const cpuOff = settings.mode !== 'cpu';
     const cpuBox = $('cpuOptions');
     cpuBox.classList.toggle('inactive', cpuOff);
-    cpuBox.setAttribute('aria-disabled', cpuOff);
+    cpuBox.querySelectorAll('[role=radiogroup]').forEach((g) => g.setAttribute('aria-disabled', cpuOff));
     cpuBox.querySelectorAll('button').forEach((b) => { b.disabled = cpuOff; });
     $('resumeBtn').hidden = !(state && state.moves.length > 0 && !state.over);
   }
 
   function showMenu() {
     cancelAI();
+    cancelFlip();
     cancelDrag();
     $('game').hidden = true;
     $('menu').hidden = false;
@@ -178,7 +183,7 @@
   }
 
   function canInteract() {
-    return !state.over && !thinking && isHumanTurn() && $('promoModal').hidden;
+    return !flipping && !state.over && !thinking && isHumanTurn() && $('promoModal').hidden;
   }
 
   function render() {
@@ -511,6 +516,35 @@
       return;
     }
     if (state.mode === 'cpu' && game.turn !== state.human) requestAI();
+    if (state.mode === 'pvp') autoFlip();
+  }
+
+  // ---- 2人対戦: 手番側が手前に来るよう盤を回す ----
+  function autoFlip() {
+    cancelFlip();
+    const want = game.turn === 'b';
+    if (state.flipped === want) return;
+    flipping = true;
+    render();
+    const board = $('board');
+    flipTimers.push(setTimeout(() => {
+      board.classList.add('flipping'); // 盤を180°回転（駒は逆回転して正立のまま）
+      flipTimers.push(setTimeout(() => {
+        board.classList.remove('flipping');
+        state.flipped = want;
+        flipping = false;
+        flipTimers = [];
+        save();
+        render();
+      }, FLIP_MS));
+    }, FLIP_DELAY_MS));
+  }
+
+  function cancelFlip() {
+    flipTimers.forEach(clearTimeout);
+    flipTimers = [];
+    $('board').classList.remove('flipping');
+    flipping = false;
   }
 
   // ---- CPU ----
@@ -554,6 +588,7 @@
   function undo() {
     if (!state.moves.length || animating) return;
     cancelAI();
+    cancelFlip();
     cancelDrag();
     state.moves.pop();
     if (state.mode === 'cpu') {
@@ -582,6 +617,7 @@
     $('menuBtn').addEventListener('click', showMenu);
     $('undoBtn').addEventListener('click', undo);
     $('flipBtn').addEventListener('click', () => {
+      if (flipping) return;
       state.flipped = !state.flipped;
       save();
       render();
