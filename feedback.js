@@ -200,6 +200,7 @@
     castle() { knock(0, 0.9); knock(0.12, 0.9); },
     promote() { knock(0, 1); [784, 988, 1319].forEach((f, i) => tone(f, 0.18, { type: 'triangle', gain: 0.1, when: 0.06 + i * 0.07 })); },
     check() { tone(988, 0.14, { type: 'triangle', gain: 0.12, when: 0.07 }); tone(1319, 0.22, { type: 'triangle', gain: 0.1, when: 0.15 }); },
+    confirm() { tone(988, 0.07, { type: 'square', gain: 0.06 }); tone(1480, 0.16, { type: 'square', gain: 0.06, when: 0.07 }); },
     error() { tone(150, 0.09, { type: 'square', gain: 0.04 }); },
     win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.35, { type: 'triangle', gain: 0.13, when: i * 0.11 })); },
     lose() { [523, 415, 330].forEach((f, i) => tone(f, 0.4, { type: 'sine', gain: 0.15, when: i * 0.16 })); },
@@ -207,7 +208,7 @@
   };
 
   const VIBRATION = {
-    tap: 8, select: 10, move: 18, capture: [28], castle: [14, 60, 14],
+    tap: 8, select: 10, confirm: [12, 40, 20], move: 18, capture: [28], castle: [14, 60, 14],
     promote: [18, 40, 18], check: [12, 50, 25], error: [8, 40, 8],
     win: [30, 60, 30, 60, 60], lose: [80], draw: [30, 60, 30]
   };

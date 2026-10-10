@@ -373,3 +373,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .settings-card h2 { font-size: .85rem; color: #b9c2ff; margin: 14px 0 6px; }
 .settings-card .seg { background: rgba(0, 0, 0, .35); }
 .settings-card #settingsClose { display: block; width: 100%; margin-top: 18px; }
+
+/* ---- タイトルからの画面切り替え演出 ---- */
+.rpg-item.chosen { animation: chosen .12s steps(1) 3; }
+@keyframes chosen { 0% { background: rgba(255, 255, 255, .42); } 50% { background: rgba(255, 255, 255, .06); } }
+.curtain { position: fixed; inset: 0; z-index: 60; background: #000; pointer-events: all; }
+.curtain.closing { animation: irisClose .45s cubic-bezier(.55, 0, .75, .3) forwards; }
+.curtain.opening { animation: curtainOpen .45s ease-out forwards; }
+@keyframes irisClose {
+  from { clip-path: circle(0 at var(--x) var(--y)); }
+  to { clip-path: circle(150vmax at var(--x) var(--y)); }
+}
+@keyframes curtainOpen { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .curtain.closing { animation: curtainOpen .3s reverse forwards; }
+}

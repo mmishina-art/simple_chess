@@ -176,7 +176,37 @@
 
   // RPG風カーソル（▶）
   function setCursor(item) {
+    if (transitioning) return; // 切り替え演出中はカーソルを動かさない
     document.querySelectorAll('.title-menu .rpg-item').forEach((b) => b.classList.toggle('cur', b === item));
+  }
+
+  // タイトルからの画面切り替え演出: 決定 → 選んだ位置から暗転 → 切り替え → 明転
+  const CHOSEN_MS = 380, CLOSE_MS = 450, OPEN_MS = 450;
+  let transitioning = false;
+  function titleGo(btn, action) {
+    if (transitioning) return;
+    setCursor(btn);
+    transitioning = true;
+    fx.play('confirm');
+    btn.classList.add('chosen');
+    const r = btn.getBoundingClientRect();
+    const curtain = $('curtain');
+    curtain.style.setProperty('--x', (r.left + r.width / 2) + 'px');
+    curtain.style.setProperty('--y', (r.top + r.height / 2) + 'px');
+    setTimeout(() => {
+      curtain.hidden = false;
+      curtain.className = 'curtain closing';
+    }, CHOSEN_MS);
+    setTimeout(() => {
+      btn.classList.remove('chosen');
+      action();
+      curtain.className = 'curtain opening';
+    }, CHOSEN_MS + CLOSE_MS);
+    setTimeout(() => {
+      curtain.hidden = true;
+      curtain.className = 'curtain';
+      transitioning = false;
+    }, CHOSEN_MS + CLOSE_MS + OPEN_MS);
   }
 
   function initTitle() {
@@ -185,8 +215,9 @@
       b.addEventListener('focus', () => setCursor(b));
       b.addEventListener('pointerdown', () => setCursor(b));
     });
-    $('continueBtn').addEventListener('click', () => showGame());
-    $('freeBtn').addEventListener('click', showMenu);
+    $('continueBtn').addEventListener('click', (e) => titleGo(e.currentTarget, showGame));
+    $('storyBtn').addEventListener('click', (e) => titleGo(e.currentTarget, enterStory));
+    $('freeBtn').addEventListener('click', (e) => titleGo(e.currentTarget, showMenu));
     $('settingsBtn').addEventListener('click', () => { syncMenu(); $('settingsModal').hidden = false; });
     $('settingsClose').addEventListener('click', () => { $('settingsModal').hidden = true; });
     $('settingsModal').addEventListener('click', (e) => { if (e.target === $('settingsModal')) $('settingsModal').hidden = true; });
@@ -906,7 +937,6 @@
   }
 
   function initStory() {
-    $('storyBtn').addEventListener('click', enterStory);
     $('storyBackBtn').addEventListener('click', showTitle);
     $('prologueBtn').addEventListener('click', () =>
       playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
@@ -1031,7 +1061,7 @@
   function initButtonFeedback() {
     document.addEventListener('pointerdown', (e) => {
       const btn = e.target.closest('button');
-      if (!btn || btn.disabled || btn.id === 'soundBtn') return;
+      if (!btn || btn.disabled || btn.id === 'soundBtn' || btn.classList.contains('rpg-item')) return;
       fx.play('tap');
     }, { passive: true });
   }
