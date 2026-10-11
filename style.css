@@ -151,7 +151,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .status.alert { color: #ff8a7a; }
 .status.thinking::after { content: ""; display: inline-block; width: 1em; text-align: left; animation: dots 1.2s steps(4) infinite; }
 @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
-.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .controls .btn { padding: 11px 4px; font-size: .92rem; }
 .moves {
   background: var(--panel); border-radius: 12px; padding: 8px 12px; max-height: 140px; overflow-y: auto;
@@ -437,3 +437,28 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #menu .menu-card h2 { color: #c9d0ff; }
 #menu .seg, #story .seg { background: rgba(0, 0, 0, .35); }
 .settings-card .mode-title { padding-top: 0; }
+
+/* ---- 待った・ヒントの残り回数 ---- */
+.controls .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 52px; padding: 6px 2px; font-size: .9rem; line-height: 1.2; }
+.controls .btn small { font-size: .68rem; opacity: .8; font-weight: 400; }
+
+/* ヒント: おすすめの駒と行き先を光らせる */
+.sq.hint-from::after, .sq.hint-to::after {
+  content: ""; position: absolute; inset: 6%; border-radius: 50%; pointer-events: none; z-index: 2;
+  border: calc(var(--sq) * .07) solid #4fd1ff; box-shadow: 0 0 12px #4fd1ff;
+  animation: hintPulse 1s ease-in-out infinite;
+}
+.sq.hint-to::after { border-style: dashed; }
+@keyframes hintPulse { 0%, 100% { opacity: .45; transform: scale(.92); } 50% { opacity: 1; transform: scale(1); } }
+
+/* ---- 星評価 ---- */
+.result-stars { margin: -2px 0 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.result-stars .star-row { font-size: 2.1rem; letter-spacing: .12em; line-height: 1; }
+.result-stars b { color: #ffd23f; text-shadow: 0 0 10px rgba(255, 210, 63, .7); font-weight: 400; animation: starPop .4s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+.result-stars b:nth-child(2) { animation-delay: .15s; }
+.result-stars b:nth-child(3) { animation-delay: .3s; }
+.result-stars i { color: rgba(255, 255, 255, .2); font-style: normal; }
+.result-stars small { color: var(--muted); font-size: .82rem; }
+@keyframes starPop { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.stage-side { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.stage-stars { color: #ffd23f; font-size: .95rem; letter-spacing: .06em; text-shadow: 0 0 6px rgba(255, 210, 63, .5); }

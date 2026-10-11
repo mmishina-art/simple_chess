@@ -42,7 +42,13 @@
   function save() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, state })); } catch (e) { /* 保存できなくても続行 */ }
   }
-  let story = { cleared: 0, prologue: false };
+  let story = { cleared: 0, prologue: false, stars: {} };
+  // ストーリーでは「待った」と「ヒント」は1局3回まで（フリー対戦は無制限）
+  const STORY_LIMIT = 3;
+  const totalStars = () => Object.values(story.stars || {}).reduce((a, b) => a + b, 0);
+  // 使った回数（待った＋ヒント）から星の数: 0回 ★★★ / 1〜2回 ★★ / 3回以上 ★
+  const starsFor = (used) => (used === 0 ? 3 : used <= 2 ? 2 : 1);
+  const starText = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
 
   // ---- デバッグモード（タイトルを5回タップ、または ?debug=1 で切替） ----
   let debug = false;
@@ -72,6 +78,7 @@
   }
   function loadStory() {
     try { Object.assign(story, JSON.parse(localStorage.getItem(STORY_KEY) || '{}')); } catch (e) { /* 無視 */ }
+    if (!story.stars) story.stars = {};
   }
 
   function load() {
@@ -260,7 +267,9 @@
       human: settings.mode === 'cpu' ? human : null,
       moves: [],
       flipped: settings.mode === 'cpu' && human === 'b',
-      over: false
+      over: false,
+      undos: 0,
+      hints: 0
     };
     save();
     showGame();
@@ -288,6 +297,7 @@
 
   // 棋譜（UCIの列）から局面を再構築
   function rebuild() {
+    clearHint();
     game = new Chess();
     sanList = [];
     const valid = [];
@@ -358,6 +368,8 @@
       if (last && (sq === last.from || sq === last.to)) cls.push('last');
       if (sq === selected) cls.push('sel');
       if (sq === checkSq) cls.push('check');
+      if (hintMove && sq === hintMove.from) cls.push('hint-from');
+      if (hintMove && sq === hintMove.to) cls.push('hint-to');
       if (targets.has(sq)) {
         cls.push('target');
         if (targets.get(sq).captured) cls.push('capture');
@@ -378,7 +390,46 @@
     renderPlayers();
     renderStatus();
     renderMoves();
-    $('undoBtn').disabled = state.moves.length === 0;
+    updateControls();
+  }
+
+  function updateControls() {
+    const isStory = state.mode === 'story';
+    const ru = remaining('undos'), rh = remaining('hints');
+    $('undoBtn').innerHTML = isStory ? `待った<small>のこり${ru}</small>` : '待った';
+    $('hintBtn').innerHTML = hintBusy ? 'ヒント<small>考え中…</small>' : isStory ? `ヒント<small>のこり${rh}</small>` : 'ヒント';
+    $('undoBtn').disabled = state.moves.length === 0 || ru <= 0;
+    $('hintBtn').disabled = hintBusy || rh <= 0 || state.over;
+  }
+
+  // ---- ヒント（強めのCPUにおすすめの一手を聞いて光らせる） ----
+  let hintWorker = null, hintBusy = false, hintMove = null, hintReq = 0;
+  function requestHint() {
+    if (hintBusy || !canInteract() || remaining('hints') <= 0) { fx.play('error'); return; }
+    if (!hintWorker) {
+      hintWorker = new Worker('ai.js');
+      hintWorker.onerror = () => { hintBusy = false; hintWorker = null; render(); };
+    }
+    hintBusy = true;
+    const id = ++hintReq, ply = state.moves.length;
+    hintWorker.onmessage = (e) => {
+      if (e.data.id !== id) return;
+      hintBusy = false;
+      const m = e.data.uci && state.moves.length === ply && game.moveFromUci(e.data.uci);
+      if (m) {
+        state.hints = (state.hints || 0) + 1;
+        save();
+        hintMove = { from: m.from, to: m.to };
+        fx.play('confirm');
+      }
+      render();
+    };
+    hintWorker.postMessage({ id, fen: Chess.START_FEN, moves: state.moves.slice(), level: 's8' });
+    render();
+  }
+  function clearHint() {
+    hintMove = null;
+    if (hintBusy) { hintReq++; hintBusy = false; }
   }
 
   function pieceName(p) {
@@ -643,6 +694,7 @@
   }
 
   function playMove(m, animate) {
+    clearHint();
     sanList.push(game.san(m));
     game.makeMove(m);
     state.moves.push(Chess.uci(m));
@@ -680,6 +732,7 @@
       } else if (!resultShown) {
         resultShown = true;
         $('resultAv').hidden = true;
+        $('resultStars').hidden = true;
         $('resultClose').hidden = false;
         $('resultClose').textContent = '盤面を見る';
         $('resultNew').textContent = 'もう一局';
@@ -736,9 +789,9 @@
     const next = Math.min(story.cleared + 1, 10);
     const all = story.cleared >= 10;
     $('storyBannerAv').innerHTML = all ? Story.avatar('noirKind', 0) : Story.avatar('s' + next, next);
-    $('storyBannerSub').textContent = all ? '全10話クリア！ 何度でも挑戦できるよ'
+    $('storyBannerSub').textContent = all ? (totalStars() === 30 ? '全話 ★3 達成！ おめでとう！' : `全10話クリア！ ★3 をめざそう（★ ${totalStars()}/30）`)
       : story.cleared === 0 ? '影の塔の10人の守り手に挑め！'
-        : `第${next}話「${stageInfo(next).name}」に挑戦中（${story.cleared}/10）`;
+        : `第${next}話「${stageInfo(next).name}」に挑戦中（★ ${totalStars()}/30）`;
   }
 
   function showStory() {
@@ -751,7 +804,7 @@
     $('game').hidden = true;
     $('story').hidden = false;
     setMusic('map');
-    $('storyCount').textContent = `${story.cleared}/10`;
+    $('storyCount').textContent = `★ ${totalStars()}/30`;
     $('endingBtn').hidden = !debug && story.cleared < 10;
     $('resetStoryBtn').hidden = !debug;
     $('debugBadge').hidden = !debug;
@@ -769,7 +822,8 @@
       card.innerHTML = `<span class="stage-av">${Story.avatar('s' + n, n)}</span>
         <span class="stage-info"><span class="stage-no">第${n}話・${S.where}</span>
         <strong>${locked ? '？？？' : S.name}</strong><small>${locked ? '前の話をクリアすると挑戦できる' : S.title}</small></span>
-        <span class="stage-badge">${cleared ? 'クリア' : locked ? '&#128274;&#xFE0E;' : '挑戦！'}</span>`;
+        <span class="stage-side"><span class="stage-badge">${cleared ? 'クリア' : locked ? '&#128274;&#xFE0E;' : '挑戦！'}</span>
+        ${cleared ? `<span class="stage-stars">${starText(story.stars[n] || 1)}</span>` : ''}</span>`;
       card.addEventListener('click', () => (debug ? openDebug(n) : openStage(n)));
       list.appendChild(card);
     });
@@ -827,7 +881,7 @@
     cancelFlip();
     hideBubble();
     $('resultModal').hidden = true;
-    state = { mode: 'story', stage: n, level: 's' + n, human: 'w', moves: [], flipped: false, over: false };
+    state = { mode: 'story', stage: n, level: 's' + n, human: 'w', moves: [], flipped: false, over: false, undos: 0, hints: 0 };
     save();
     showGame();
   }
@@ -837,7 +891,18 @@
     const S = stageInfo();
     const win = st.winner === state.human;
     const n = state.stage;
-    if (win && n > story.cleared) { story.cleared = n; saveStory(); }
+    const used = (state.undos || 0) + (state.hints || 0);
+    const stars = win ? starsFor(used) : 0;
+    if (win) {
+      if (n > story.cleared) story.cleared = n;
+      story.stars[n] = Math.max(story.stars[n] || 0, stars);
+      saveStory();
+    }
+    $('resultStars').hidden = !win;
+    if (win) {
+      $('resultStars').innerHTML = `<span class="star-row">${'<b>★</b>'.repeat(stars)}${'<i>★</i>'.repeat(3 - stars)}</span>` +
+        `<small>${used === 0 ? '待った・ヒントなしで勝利！' : `待った・ヒント ${used}回`}</small>`;
+    }
     $('resultAv').hidden = false;
     $('resultAv').innerHTML = Story.avatar('s' + n, n);
     $('resultTitle').textContent = win ? '勝利！' : st.winner ? '負けてしまった…' : '引き分け…';
@@ -1024,8 +1089,15 @@
     thinking = false;
   }
 
+  function remaining(kind) {
+    return state.mode === 'story' ? Math.max(0, STORY_LIMIT - (state[kind] || 0)) : Infinity;
+  }
+
   function undo() {
     if (!state.moves.length || animating) return;
+    if (remaining('undos') <= 0) { fx.play('error'); return; }
+    state.undos = (state.undos || 0) + 1;
+    clearHint();
     cancelAI();
     cancelFlip();
     cancelDrag();
@@ -1055,6 +1127,7 @@
   function initGameControls() {
     $('menuBtn').addEventListener('click', goBack);
     $('undoBtn').addEventListener('click', undo);
+    $('hintBtn').addEventListener('click', requestHint);
     $('flipBtn').addEventListener('click', () => {
       if (flipping) return;
       state.flipped = !state.flipped;

@@ -386,7 +386,7 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
     s4: { depth: 2, useQ: true, noise: 90, randomRate: 0.06 },
     s5: { depth: 2, useQ: true, noise: 40, randomRate: 0.02 },
     s6: { depth: 3, useQ: true, noise: 50, randomRate: 0 },
-    s7: { depth: 3, useQ: true, noise: 15, randomRate: 0 },
+    s7: { depth: 8, timeMs: 500 },
     s8: { depth: 8, timeMs: 900 },
     s9: { depth: 8, timeMs: 2000 },
     s10: { depth: 30, timeMs: 3500, plus: true }
