@@ -72,6 +72,7 @@
         </button>
       </nav>
     </div>
+    <div id="appVersion" class="app-version" aria-label="バージョン"></div>
   </main>
 
   <!-- フリー対戦メニュー -->
@@ -146,16 +147,17 @@
           <button type="button" data-value="off">オフ</button>
         </div>
       </section>
-      <section>
-        <h2>アプリ</h2>
-        <button type="button" id="settingsInstall" class="btn wide">アプリとしてインストールする方法</button>
-      </section>
+      <p id="settingsVersion" class="settings-version"></p>
       <section id="hapticSection">
         <h2>振動</h2>
         <div class="seg" data-name="haptic" role="radiogroup">
           <button type="button" data-value="on">オン</button>
           <button type="button" data-value="off">オフ</button>
         </div>
+      </section>
+      <section>
+        <h2>アプリ</h2>
+        <button type="button" id="settingsInstall" class="btn wide">アプリとしてインストールする方法</button>
       </section>
     </div>
   </div>
@@ -404,6 +406,7 @@
     <button type="button" id="updateBtn" class="btn small primary">更新</button>
   </div>
 
+  <script src="version.js"></script>
   <script src="chess.js"></script>
   <script src="pieces.js"></script>
   <script src="feedback.js"></script>

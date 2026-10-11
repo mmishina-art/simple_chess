@@ -1206,6 +1206,9 @@
   applyFeedbackSettings();
   setMusic('title');
   lockScroll();
+  // バージョン表記（更新が反映されたかすぐ分かるように）
+  $('appVersion').textContent = 'Ver ' + self.APP_VERSION;
+  $('settingsVersion').textContent = 'バージョン ' + self.APP_VERSION;
   // 中身が組み上がってから表示する（起動時のガクつき防止）
   requestAnimationFrame(() => document.documentElement.classList.remove('booting'));
   Pwa.init({ afterOpen: syncHistory });

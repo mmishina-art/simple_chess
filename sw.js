@@ -1,10 +1,11 @@
 /* シンプルチェス: Service Worker（オフライン対応）
  * ファイルを更新したら CACHE のバージョンを上げること。 */
-const CACHE = 'simple-chess-v32';
+const CACHE = 'simple-chess-v1.33'; // version.js の APP_VERSION と同じ番号
 const ASSETS = [
   './',
   'index.html',
   'style.css',
+  'version.js',
   'chess.js',
   'pieces.js',
   'ai.js',

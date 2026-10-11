@@ -691,3 +691,10 @@ main.screen:not(.title-screen) {
 html.booting .title-inner { opacity: 0; transition: none; }
 
 html, body { background: #0f0d24; }
+
+/* ---- バージョン表記 ---- */
+.app-version {
+  position: absolute; right: calc(env(safe-area-inset-right) + 12px); bottom: calc(env(safe-area-inset-bottom) + 8px);
+  z-index: 2; font-size: .72rem; letter-spacing: .08em; color: rgba(220, 214, 255, .55); pointer-events: none;
+}
+.settings-version { order: 99; margin: 26px 0 0; text-align: center; font-size: .8rem; color: #9aa3d6; letter-spacing: .06em; }
