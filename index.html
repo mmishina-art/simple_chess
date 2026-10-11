@@ -84,7 +84,7 @@
       <h1><span class="mt-orn" aria-hidden="true"></span><span class="mt-text">フリー対戦</span><span class="mt-orn" aria-hidden="true"></span></h1>
       <p>CPU対戦・2人対戦</p>
     </div>
-    <div class="menu-wrap">
+    <div class="menu-wrap screen-scroll">
     <div class="menu-card">
 
       <section>
@@ -172,7 +172,7 @@
       <h1><span class="mt-orn" aria-hidden="true"></span><span class="mt-text">あそびかた</span><span class="mt-orn" aria-hidden="true"></span></h1>
       <p>ピピと一緒にルールを覚えよう</p>
     </div>
-    <div id="lessonList" class="story-list"></div>
+    <div class="screen-scroll"><div id="lessonList" class="story-list"></div></div>
   </main>
 
   <!-- あそびかた: レッスン -->
@@ -181,17 +181,19 @@
       <button type="button" id="lessonBack" class="back-btn" aria-label="レッスン一覧にもどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
       <h1 id="lessonTitle" class="title"></h1>
     </header>
+    <div class="screen-scroll">
     <div class="lesson-body">
       <div id="tutTalk" class="tut-talk" role="button" tabindex="0" aria-live="polite">
         <span id="tutAv" class="tut-av"></span>
         <p class="tut-bubble"><span id="tutText"></span><span id="tutMore" class="tut-more">タップで次へ &#9660;</span></p>
       </div>
-      <div id="tutBoard" class="tboard" aria-label="練習用の盤"></div>
+      <div class="tboard-wrap"><div id="tutBoard" class="tboard" aria-label="練習用の盤"></div></div>
       <div id="lessonGoal" class="lesson-goal"></div>
       <div class="lesson-actions">
         <button type="button" id="lessonRetry" class="btn">やりなおす</button>
         <button type="button" id="lessonNext" class="btn primary" hidden>つぎのレッスンへ</button>
       </div>
+    </div>
     </div>
   </main>
 
@@ -208,11 +210,13 @@
       <h1><span class="mt-orn" aria-hidden="true"></span><span class="mt-text">ストーリー</span><span class="mt-orn" aria-hidden="true"></span></h1>
       <p>〜 影の塔 〜</p>
     </div>
+    <div class="screen-scroll">
     <div id="storyList" class="story-list"></div>
     <div class="story-extra">
       <button type="button" id="prologueBtn" class="btn small">プロローグを見る</button>
       <button type="button" id="endingBtn" class="btn small" hidden>エンディングを見る</button>
       <button type="button" id="resetStoryBtn" class="btn small" hidden>進行をリセット</button>
+    </div>
     </div>
   </main>
 
@@ -226,7 +230,7 @@
       </button>
     </header>
 
-    <div class="layout">
+    <div class="layout screen-scroll">
       <div class="board-area">
         <div class="player" id="playerTop">
           <span class="avatar" hidden></span><span class="dot"></span><span class="name"></span>
@@ -250,14 +254,18 @@
           <button type="button" id="flipBtn" class="btn">盤を反転</button>
           <button type="button" id="newBtn" class="btn">新しい対局</button>
         </div>
-        <div id="reviewBar" class="review-bar" hidden>
-          <button type="button" class="rv-btn" data-rv="first" aria-label="最初の局面">&laquo;</button>
-          <button type="button" class="rv-btn" data-rv="prev" aria-label="1手もどす">&lsaquo;</button>
-          <span id="reviewPos" class="rv-pos"></span>
-          <button type="button" class="rv-btn" data-rv="next" aria-label="1手すすむ">&rsaquo;</button>
-          <button type="button" class="rv-btn" data-rv="last" aria-label="最新の局面">&raquo;</button>
+        <div class="log-row">
+          <button type="button" id="moveStrip" class="move-strip" aria-label="棋譜をひらく">
+            <span class="ms-text"><span id="moveStripText"></span></span><span class="ms-open">棋譜 &#9656;&#xFE0E;</span>
+          </button>
+          <div id="reviewBar" class="review-bar" hidden>
+            <button type="button" class="rv-btn" data-rv="first" aria-label="最初の局面">&laquo;</button>
+            <button type="button" class="rv-btn" data-rv="prev" aria-label="1手もどす">&lsaquo;</button>
+            <button type="button" id="reviewPos" class="rv-pos" aria-label="棋譜をひらく"></button>
+            <button type="button" class="rv-btn" data-rv="next" aria-label="1手すすむ">&rsaquo;</button>
+            <button type="button" class="rv-btn" data-rv="last" aria-label="最新の局面">&raquo;</button>
+          </div>
         </div>
-        <div id="moveList" class="moves" aria-label="棋譜（タップでその局面を表示）"></div>
       </aside>
     </div>
   </main>
@@ -337,6 +345,18 @@
         <button type="button" class="btn" data-act="clear">クリア扱いにする</button>
       </div>
       <button type="button" class="btn small" data-act="close">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 棋譜 -->
+  <div id="movesModal" class="modal" hidden>
+    <div class="modal-card rpg-window settings-card moves-card">
+      <header class="settings-head">
+        <button type="button" id="movesBack" class="back-btn" aria-label="もどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+        <h3 class="moves-title">棋譜</h3>
+      </header>
+      <p class="moves-hint">手をタップすると、その局面を盤に表示します</p>
+      <div id="moveList" class="moves moves-full" aria-label="棋譜"></div>
     </div>
   </div>
 

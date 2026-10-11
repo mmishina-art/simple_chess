@@ -13,7 +13,9 @@
   --check: radial-gradient(circle, rgba(255, 40, 40, .95) 0%, rgba(230, 20, 20, .6) 40%, rgba(200, 0, 0, 0) 75%);
   --hint: rgba(20, 30, 20, .35);
   --sq: 40px;
-  --board: min(94vw, calc(100dvh - 300px), 560px);
+  /* 盤の大きさ: 画面の高さから、上のバー・対局者・状態・ボタン・棋譜の帯の分（約330px）を引いた残り */
+  --safe-v: calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
+  --board: min(94vw, calc(100dvh - var(--safe-v) - 330px), 560px);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -165,10 +167,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* 横長画面: 盤の横にパネル */
 @media (min-aspect-ratio: 5/4) and (min-width: 700px) {
-  :root { --board: min(calc(100dvh - 130px), calc(100vw - 380px), 640px); }
+  :root { --board: min(calc(100dvh - var(--safe-v) - 150px), calc(100vw - 380px), 640px); }
   .layout { flex-direction: row; justify-content: center; align-items: flex-start; gap: 24px; }
   .side { width: 300px; margin-top: 38px; }
-  .moves { max-height: calc(var(--board) - 140px); }
 }
 
 /* ---- モーダル ---- */
@@ -602,3 +603,85 @@ html.lock body { position: fixed; inset: 0; }
 .install-steps.off { visibility: hidden; }
 
 main.screen:not(.title-screen) { padding-top: env(safe-area-inset-top); }
+
+/* ---- スクロールの方針: ページ自体は動かさず、必要な部分（.screen-scroll）だけスクロールする ---- */
+html, body { overflow: hidden; overscroll-behavior: none; }
+body { position: fixed; inset: 0; }
+main.screen:not(.title-screen) {
+  position: fixed; inset: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+/* 入りきるときは中央に、入りきらないときだけスクロール（上が切れないよう margin:auto で中央寄せ） */
+#menu .menu-wrap { display: flex; flex-direction: column; align-items: center; }
+#menu .menu-card { margin: auto 0; }
+#game .layout { padding-bottom: 12px; }
+
+/* ---- 対局中の棋譜: 直近の手だけを1行で表示し、タップで全手順の窓を開く ---- */
+.log-row { height: 46px; }
+.move-strip {
+  width: 100%; height: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 12px;
+  background: var(--panel); color: var(--text); padding: 0 12px; font-size: .92rem; text-align: left;
+}
+.move-strip:active { filter: brightness(1.2); }
+.ms-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.ms-text b { color: var(--accent); font-weight: 700; }
+.ms-open { flex: none; font-weight: 800; font-size: .85rem; color: var(--text); background: var(--panel-2); border-radius: 8px; padding: 6px 10px; }
+.log-row .review-bar { height: 100%; padding: 3px 6px; }
+.log-row .rv-btn { height: 40px; }
+.rv-pos { border: 0; background: transparent; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.moves-card { color: #fff; }
+.moves-title { margin: 0; font-size: 1.2rem; letter-spacing: .2em; }
+.moves-hint { margin: 2px 0 10px; color: #c9d0ff; font-size: .85rem; text-align: left; }
+.moves-full { max-height: none; flex: 1; min-height: 0; overflow-y: auto; background: rgba(0, 0, 0, .3); font-size: 1rem; row-gap: 6px; padding: 10px 12px; }
+
+/* 棋譜の帯: 入りきらないときは古い手のほうを左から隠し、最新の手を必ず見せる */
+.ms-text { display: flex; justify-content: flex-end; }
+.ms-text > span { white-space: nowrap; }
+
+/* 状態表示は1行に収める */
+.status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(.82rem, 3.6vw, 1rem); }
+
+/* レッスン: 説明・ボタンを置いた残りに盤（正方形は JS で合わせる）。横向きは盤を左、説明を右に */
+#lesson .screen-scroll { display: flex; }
+.lesson-body {
+  flex: 1; min-height: 0; width: min(94vw, 560px); margin: 0 auto; padding-bottom: 12px;
+  display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(160px, 1fr) auto auto;
+  grid-template-areas: "talk" "board" "goal" "actions";
+}
+.tut-talk { grid-area: talk; }
+.tboard-wrap { grid-area: board; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.tboard { width: 100%; flex: none; }
+.lesson-goal { grid-area: goal; }
+.lesson-actions { grid-area: actions; }
+@media (min-aspect-ratio: 5/4) {
+  .lesson-body {
+    width: min(96vw, 1000px);
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "board talk" "board ." "board goal" "board actions";
+  }
+}
+
+/* 背の低い画面では見出しと余白を詰める */
+@media (max-height: 700px) {
+  .mode-title { padding-bottom: 6px; }
+  .mode-title p { display: none; }
+  .mt-text { font-size: 1.7rem; }
+  .topbar { min-height: 56px; padding-top: 5px; padding-bottom: 5px; }
+  .menu-card { padding: 14px 16px; }
+  .menu-card h2 { margin: 10px 0 6px; }
+  .seg button { padding: 9px 4px; }
+  #startBtn, #resumeBtn { margin-top: 14px; padding: 12px; }
+}
+@media (max-height: 460px) {
+  .mode-title { display: none; }
+}
+@media (max-height: 460px) {
+  .menu-card { padding: 10px 14px; }
+  .menu-card h2 { margin: 6px 0 4px; font-size: .8rem; }
+  .seg button { padding: 7px 4px; }
+  #startBtn, #resumeBtn { margin-top: 10px; padding: 10px; }
+}
+@media (min-aspect-ratio: 5/4) { .tboard-wrap { justify-content: flex-end; } }

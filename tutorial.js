@@ -346,8 +346,15 @@
       board.appendChild(el);
       squares.push(el);
     }
-    const fit = () => board.style.setProperty('--sq', (board.clientWidth / 8) + 'px');
-    if (window.ResizeObserver) new ResizeObserver(fit).observe(board); else window.addEventListener('resize', fit);
+    // 説明やボタンを置いた残りの場所に、収まる最大の正方形で盤を描く
+    const wrap = board.parentElement;
+    const fit = () => {
+      const size = Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight));
+      if (size <= 0) return;
+      board.style.width = board.style.height = size + 'px';
+      board.style.setProperty('--sq', (size / 8) + 'px');
+    };
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(wrap); else window.addEventListener('resize', fit);
   }
 
   function draw() {

@@ -179,6 +179,7 @@
 
   function goBack() {
     if (transitioning || Scene.isActive() || !$('promoModal').hidden || !$('resultModal').hidden) { syncHistory(); return; }
+    if (!$('movesModal').hidden) { $('movesModal').hidden = true; syncHistory(); return; }
     if (!$('installModal').hidden) { $('installModal').hidden = true; syncHistory(); return; }
     if (!$('settingsModal').hidden) { $('settingsModal').hidden = true; syncHistory(); return; }
     if (!$('confirmModal').hidden) { $('confirmModal').hidden = true; syncHistory(); return; }
@@ -416,7 +417,12 @@
       if (!mv) return;
       fx.play('select');
       setView(+mv.dataset.ply);
+      goBack(); // 窓を閉じて、選んだ局面を盤で見せる
     });
+    $('moveStrip').addEventListener('click', openMoves);
+    $('reviewPos').addEventListener('click', openMoves);
+    $('movesBack').addEventListener('click', goBack);
+    $('movesModal').addEventListener('click', (e) => { if (e.target === $('movesModal')) goBack(); });
   }
 
   function canInteract() {
@@ -570,6 +576,7 @@
     el.className = 'status';
     const showBar = state.moves.length > 0 && (state.over || viewPly !== null);
     $('reviewBar').hidden = !showBar;
+    $('moveStrip').hidden = showBar; // 振り返り中は、同じ場所に操作バーを出す
     if (showBar) $('reviewPos').textContent = `${viewPly === null ? state.moves.length : viewPly} / ${state.moves.length} 手目`;
     if (viewPly !== null) {
       el.textContent = state.over ? '振り返り中（» で最後の局面へ）' : '振り返り中（盤をタップで最新へ）';
@@ -609,8 +616,28 @@
       html += sanList[i + 1] !== undefined ? mv(i + 1) : '<span></span>';
     }
     el.innerHTML = html;
-    if (viewPly === null) el.scrollTop = el.scrollHeight;
-    else { const c = el.querySelector('.cur'); if (c) c.scrollIntoView({ block: 'nearest' }); }
+    if (!$('movesModal').hidden) scrollMovesToCur();
+    // 盤の下の帯には直近の4手だけを表示する
+    const n = sanList.length, start = Math.max(0, n - 4);
+    const parts = [];
+    for (let i = start; i < n; i++) {
+      let t = sanList[i];
+      if (i % 2 === 0) t = `${i / 2 + 1}. ${t}`;
+      else if (i === start) t = `${(i + 1) / 2}… ${t}`;
+      parts.push(i === n - 1 ? `<b>${t}</b>` : t);
+    }
+    $('moveStripText').innerHTML = n === 0 ? '棋譜はここに表示されます' : (start > 0 ? '… ' : '') + parts.join(' ');
+  }
+
+  function scrollMovesToCur() {
+    const el = $('moveList'), c = el.querySelector('.cur');
+    if (c) c.scrollIntoView({ block: 'center' }); else el.scrollTop = el.scrollHeight;
+  }
+
+  function openMoves() {
+    $('movesModal').hidden = false;
+    scrollMovesToCur();
+    syncHistory();
   }
 
   // ---- 盤の操作（タップ・ドラッグ） ----
