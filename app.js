@@ -1211,5 +1211,8 @@
   $('settingsVersion').textContent = 'バージョン ' + self.APP_VERSION;
   // 中身が組み上がってから表示する（起動時のガクつき防止）
   requestAnimationFrame(() => document.documentElement.classList.remove('booting'));
+  // 画面の拡大を止める（ダブルタップは CSS の touch-action、iPhone のピンチはここで止める）
+  ['gesturestart', 'gesturechange'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+  document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
   Pwa.init({ afterOpen: syncHistory });
 })();

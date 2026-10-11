@@ -703,3 +703,5 @@ html, body { background: #0f0d24; }
 .settings-version { order: 99; margin: 26px 0 0; text-align: center; font-size: .8rem; color: #9aa3d6; letter-spacing: .06em; }
 /* 背の低い画面では上の余白を控えめにして、対局画面を1画面に収める */
 @media (max-height: 600px) { :root { --top-gap: 8px; } }
+/* ダブルタップでの拡大を止める（touch-action は継承されないので全要素に付ける。盤とタイトルは none のまま） */
+*, *::before, *::after { touch-action: manipulation; }
