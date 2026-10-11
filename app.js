@@ -1206,5 +1206,7 @@
   applyFeedbackSettings();
   setMusic('title');
   lockScroll();
+  // 中身が組み上がってから表示する（起動時のガクつき防止）
+  requestAnimationFrame(() => document.documentElement.classList.remove('booting'));
   Pwa.init({ afterOpen: syncHistory });
 })();

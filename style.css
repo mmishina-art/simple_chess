@@ -685,3 +685,7 @@ main.screen:not(.title-screen) {
   #startBtn, #resumeBtn { margin-top: 10px; padding: 10px; }
 }
 @media (min-aspect-ratio: 5/4) { .tboard-wrap { justify-content: flex-end; } }
+
+/* 起動直後: 中身（つづきから・進み具合など）を組み上げ終わるまで見せず、終わったらふわっと表示する */
+.title-inner { transition: opacity .35s ease-out; }
+html.booting .title-inner { opacity: 0; transition: none; }
