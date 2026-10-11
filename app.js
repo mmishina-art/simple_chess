@@ -163,7 +163,7 @@
   }
 
   function goBack() {
-    if (transitioning || scene || !$('promoModal').hidden || !$('resultModal').hidden) { syncHistory(); return; }
+    if (transitioning || Scene.isActive() || !$('promoModal').hidden || !$('resultModal').hidden) { syncHistory(); return; }
     if (!$('settingsModal').hidden) { $('settingsModal').hidden = true; syncHistory(); return; }
     if (!$('confirmModal').hidden) { $('confirmModal').hidden = true; syncHistory(); return; }
     if (!$('debugModal').hidden) { $('debugModal').hidden = true; syncHistory(); return; }
@@ -883,7 +883,7 @@
   // タイトルから「ストーリーモード」: 初めての時はプロローグ → 第1話へそのまま進む
   function enterStory() {
     if (!story.prologue && story.cleared === 0) {
-      playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => {
+      Scene.play(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => {
         story.prologue = true;
         saveStory();
         openStage(1);
@@ -893,9 +893,9 @@
 
   function openStage(n) {
     const S = stageInfo(n);
-    const go = () => playScene(S.intro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => startStoryGame(n));
+    const go = () => Scene.play(S.intro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => startStoryGame(n));
     if (n === 1 && !story.prologue) {
-      playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); go(); });
+      Scene.play(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); go(); });
     } else go();
   }
 
@@ -913,8 +913,8 @@
       if (!act) return;
       modal.hidden = true;
       const a = act.dataset.act;
-      if (a === 'intro') playScene(S.intro, { stage: n, chapter }, () => openDebug(n));
-      if (a === 'outro') playScene(S.outro, { stage: n, chapter }, () => openDebug(n));
+      if (a === 'intro') Scene.play(S.intro, { stage: n, chapter }, () => openDebug(n));
+      if (a === 'outro') Scene.play(S.outro, { stage: n, chapter }, () => openDebug(n));
       if (a === 'play') startStoryGame(n);
       if (a === 'clear') {
         story.cleared = Math.max(story.cleared, n);
@@ -962,8 +962,8 @@
       $('resultNew').textContent = 'つづきを見る';
       $('resultNew').onclick = () => {
         $('resultModal').hidden = true;
-        playScene(S.outro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => {
-          if (n === 10) playScene(Story.ENDING, { stage: 0, chapter: 'エンディング' }, showStory);
+        Scene.play(S.outro, { stage: n, chapter: `第${n}話　${S.title} ${S.name}` }, () => {
+          if (n === 10) Scene.play(Story.ENDING, { stage: 0, chapter: 'エンディング' }, showStory);
           else showStory();
         });
       };
@@ -996,103 +996,15 @@
     $('bubble').hidden = true;
   }
 
-  // ---- 会話シーン ----
-  let scene = null;
-  const TYPE_MS = 32;
-
-  // キャラごとの声の高さ（しゃべり音の周波数）
-  const VOICE = {
-    pipi: 1150, s1: 900, s2: 1300, s3: 620, s4: 760, s5: 230, s6: 840,
-    s7: 400, s8: 340, s9: 280, s10: 210, noirKind: 560, me: 680
-  };
-  const SILENT_CHARS = /[\s、。！？!?…・「」『』（）()ー～]/;
-
-  function speaker(who, ctx) {
-    if (who === 'p') return { name: Story.PIPI.name, key: 'pipi', stage: 0, voice: VOICE.pipi };
-    if (who === 'e') return { name: stageInfo(ctx.stage).name, key: 's' + ctx.stage, stage: ctx.stage, voice: VOICE['s' + ctx.stage] };
-    if (who === 'k') return { name: 'ノワール', key: 'noirKind', stage: 0, voice: VOICE.noirKind };
-    if (who === 'me') return { name: 'きみ', key: null, me: true, voice: VOICE.me };
-    return { name: '', key: null, voice: 0 };
-  }
-
-  function playScene(lines, ctx, onDone) {
-    scene = { lines, ctx, onDone, i: -1, typing: false, timer: 0, key: undefined, prevMusic: music };
-    $('sceneChapter').textContent = ctx.chapter || '';
-    $('scene').hidden = false;
-    $('scene').className = 'scene' + (ctx.stage >= 9 ? ' dark' : '');
-    setMusic(ctx.stage >= 9 ? 'boss' : 'talk');
-    $('scenePortrait').innerHTML = '';
-    nextLine();
-  }
-
-  function nextLine() {
-    if (!scene) return;
-    if (scene.typing) { finishTyping(); return; }
-    scene.i++;
-    if (scene.i >= scene.lines.length) { endScene(); return; }
-    const [who, text] = scene.lines[scene.i];
-    const sp = speaker(who, scene.ctx);
-    const box = $('scene');
-    box.classList.toggle('narration', !sp.name);
-    box.classList.toggle('me', !!sp.me);
-    $('sceneName').textContent = sp.name;
-    // 話し手が変わったら顔を入れ替える（ナレーションときみの時は直前の顔を薄く残す）
-    const portrait = $('scenePortrait');
-    if (sp.key && sp.key !== scene.key) {
-      scene.key = sp.key;
-      portrait.innerHTML = Story.avatar(sp.key, sp.stage);
-      portrait.classList.remove('enter');
-      void portrait.offsetWidth;
-      portrait.classList.add('enter');
-    }
-    portrait.classList.toggle('dim', !sp.key);
-    const el = $('sceneText');
-    el.textContent = '';
-    scene.full = text;
-    scene.pos = 0;
-    scene.typing = true;
-    clearInterval(scene.timer);
-    scene.timer = setInterval(() => {
-      scene.pos++;
-      el.textContent = text.slice(0, scene.pos);
-      // 文字に合わせて「ポポポ」としゃべる（ナレーションは無音）
-      const ch = text[scene.pos - 1];
-      if (sp.voice && scene.pos % 2 === 1 && !SILENT_CHARS.test(ch)) fx.blip(sp.voice);
-      if (scene.pos >= text.length) finishTyping();
-    }, TYPE_MS);
-  }
-
-  function finishTyping() {
-    clearInterval(scene.timer);
-    scene.typing = false;
-    $('sceneText').textContent = scene.full;
-  }
-
-  function endScene() {
-    if (!scene) return;
-    clearInterval(scene.timer);
-    const done = scene.onDone;
-    const prev = scene.prevMusic;
-    scene = null;
-    $('scene').hidden = true;
-    setMusic(prev); // 会話の前の曲に戻す（次の画面が自分の曲に切り替える）
-    if (done) done();
-  }
-
   function initStory() {
     $('storyBackBtn').addEventListener('click', goBack);
     $('prologueBtn').addEventListener('click', () =>
-      playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
+      Scene.play(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
     $('endingBtn').addEventListener('click', () =>
-      playScene(Story.ENDING, { stage: 0, chapter: 'エンディング' }, null));
-    $('scene').addEventListener('click', (e) => {
-      if (e.target.closest('#sceneSkip')) return;
-      fx.vibrate('tap');
-      nextLine();
-    });
-    $('sceneSkip').addEventListener('click', endScene);
+      Scene.play(Story.ENDING, { stage: 0, chapter: 'エンディング' }, null));
+    Scene.init({ stageInfo, setMusic, getMusic: () => music });
     $('resetStoryBtn').addEventListener('click', () => confirmBox('ストーリーの進行をリセットしますか？', () => {
-      story = { cleared: 0, prologue: false };
+      story = { cleared: 0, prologue: false, stars: {} };
       saveStory();
       showStory();
     }));
@@ -1217,69 +1129,6 @@
     }, { passive: true });
   }
 
-  // ---- 新しいバージョンの通知と更新 ----
-  function initUpdates() {
-    const sw = navigator.serviceWorker;
-    // 「更新」を押した時だけ再読み込みする（初回インストール時の切り替えでは読み込み直さない）
-    let wantReload = false;
-    sw.addEventListener('controllerchange', () => {
-      if (!wantReload) return;
-      wantReload = false;
-      location.reload();
-    });
-    sw.register('sw.js').then((reg) => {
-      const offer = (worker) => {
-        // 初回インストール時（まだ旧版がない）は通知しない
-        if (!worker || !sw.controller) return;
-        $('updateBar').hidden = false;
-        $('updateBtn').onclick = () => {
-          $('updateBtn').disabled = true;
-          $('updateBtn').textContent = '更新中…';
-          wantReload = true;
-          worker.postMessage({ type: 'SKIP_WAITING' });
-        };
-      };
-      if (reg.waiting) offer(reg.waiting);
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => { if (nw.state === 'installed') offer(nw); });
-      });
-      // アプリを開き直した時や、しばらくぶりに表示した時に新しい版を確認する
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') reg.update().catch(() => {});
-      });
-      setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
-    }).catch(() => { /* オフライン非対応でも動作 */ });
-    $('updateLater').addEventListener('click', () => { $('updateBar').hidden = true; });
-  }
-
-  // ---- PWA ----
-  function initPWA() {
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-      initUpdates();
-    }
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-    const hint = $('installHint');
-    let deferred = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferred = e;
-      hint.hidden = false;
-      hint.innerHTML = '<button type="button" class="btn small" id="installBtn">ホーム画面に追加</button>';
-      $('installBtn').addEventListener('click', async () => {
-        deferred.prompt();
-        await deferred.userChoice;
-        deferred = null;
-        hint.hidden = true;
-      });
-    });
-    if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
-      hint.hidden = false;
-      hint.textContent = '共有ボタン →「ホーム画面に追加」でアプリとして使えます';
-    }
-  }
-
   load();
   loadStory();
   buildBoard();
@@ -1292,5 +1141,5 @@
   initButtonFeedback();
   applyFeedbackSettings();
   setMusic('title');
-  initPWA();
+  Pwa.init();
 })();
