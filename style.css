@@ -411,3 +411,29 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .settings-card h2 { font-size: 1rem; color: #c9d0ff; margin: 18px 0 8px; }
 .settings-card .seg { background: rgba(0, 0, 0, .35); }
 .settings-card .seg button { padding: 15px 4px; font-size: 1.05rem; }
+
+/* ---- モード画面の見出し（タイトルロゴと同じ金の明朝体） ---- */
+.mode-title { text-align: center; padding: 2px 16px 14px; }
+.mode-title small { display: block; font-size: .72rem; font-weight: 800; letter-spacing: .5em; color: #d8b45c; margin-left: .5em; }
+.mode-title h1 { margin: 4px 0 0; display: flex; align-items: center; justify-content: center; gap: 14px; }
+.mt-text {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; font-weight: 900;
+  font-size: 2.1rem; letter-spacing: .16em; margin-right: -.16em; line-height: 1.15;
+  background: linear-gradient(#fffbe0 0%, #f6d77a 45%, #c8902a 72%, #f2c14e 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 #3a2206) drop-shadow(0 0 10px rgba(255, 210, 120, .3));
+}
+.mt-orn { position: relative; width: 44px; height: 2px; background: linear-gradient(90deg, transparent, #e6c46a); }
+.mt-orn:last-child { transform: scaleX(-1); }
+.mt-orn::after { content: ""; position: absolute; right: -3px; top: -3px; width: 8px; height: 8px; background: #f2c14e; transform: rotate(45deg); box-shadow: 0 0 6px rgba(242, 193, 78, .7); }
+.mode-title p { margin: 6px 0 0; color: #cfc7ff; font-size: .86rem; letter-spacing: .12em; }
+.topbar-spacer { flex: 1; }
+
+/* ストーリー・フリー対戦の画面もタイトルと同じ夜空の色合いに */
+#story, #menu { background: radial-gradient(ellipse at 50% -10%, #3a2f7a 0%, transparent 55%), linear-gradient(#0b0a24 0%, #171640 55%, #281f48 100%); }
+#story .stage-card { background: rgba(20, 26, 74, .78); border: 1px solid rgba(255, 255, 255, .12); }
+#story .stage-card.next { background: linear-gradient(135deg, rgba(90, 66, 20, .9), rgba(20, 26, 74, .9)); }
+#menu .menu-card { background: linear-gradient(#141a4a, #0a0e2e); border: 3px solid #fff; box-shadow: 0 0 0 3px #0a0e2e, 0 10px 30px rgba(0, 0, 0, .55); }
+#menu .menu-card h2 { color: #c9d0ff; }
+#menu .seg, #story .seg { background: rgba(0, 0, 0, .35); }
+.settings-card .mode-title { padding-top: 0; }
