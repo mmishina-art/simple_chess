@@ -142,6 +142,8 @@
     cancelFlip();
     cancelDrag();
     hideBubble();
+    $('tutorial').hidden = true;
+    $('lesson').hidden = true;
     $('game').hidden = true;
     $('story').hidden = true;
     $('title').hidden = true;
@@ -155,8 +157,12 @@
   // ---- 「もどる」の統一（画面のボタンと、Android の戻る操作・ブラウザの戻る） ----
   // タイトル以外の画面にいる間は履歴を1つ積んでおき、戻る操作をアプリ内の「もどる」に置き換える
   let ignorePop = false;
+  function onlyScreen(id) {
+    document.querySelectorAll('main.screen').forEach((m) => { m.hidden = m.id !== id; });
+  }
+
   function syncHistory() {
-    const atTitle = !$('title').hidden && $('settingsModal').hidden;
+    const atTitle = !$('title').hidden && $('settingsModal').hidden && $('installModal').hidden;
     const pushed = !!(history.state && history.state.chessApp);
     if (!atTitle && !pushed) history.pushState({ chessApp: 1 }, '');
     else if (atTitle && pushed) { ignorePop = true; history.back(); }
@@ -164,11 +170,13 @@
 
   function goBack() {
     if (transitioning || Scene.isActive() || !$('promoModal').hidden || !$('resultModal').hidden) { syncHistory(); return; }
+    if (!$('installModal').hidden) { $('installModal').hidden = true; syncHistory(); return; }
     if (!$('settingsModal').hidden) { $('settingsModal').hidden = true; syncHistory(); return; }
     if (!$('confirmModal').hidden) { $('confirmModal').hidden = true; syncHistory(); return; }
     if (!$('debugModal').hidden) { $('debugModal').hidden = true; syncHistory(); return; }
     if (!$('game').hidden) { if (state.mode === 'story') showStory(); else showMenu(); return; }
-    if (!$('story').hidden || !$('menu').hidden) { showTitle(); return; }
+    if (!$('lesson').hidden) { Tutorial.showList(); return; }
+    if (!$('story').hidden || !$('menu').hidden || !$('tutorial').hidden) { showTitle(); return; }
     syncHistory();
   }
 
@@ -187,6 +195,8 @@
     cancelFlip();
     cancelDrag();
     hideBubble();
+    $('tutorial').hidden = true;
+    $('lesson').hidden = true;
     $('game').hidden = true;
     $('story').hidden = true;
     $('menu').hidden = true;
@@ -205,6 +215,9 @@
         : `${state.mode === 'cpu' ? 'CPU対戦' : '2人対戦'}（${state.moves.length}手目）`;
     }
     storyBannerUpdate();
+    const td = Tutorial.doneCount();
+    $('tutorialSub').textContent = td === 0 ? 'はじめての人はここから！'
+      : td >= Tutorial.count() ? 'ぜんぶクリア！ ふく習もできるよ' : `レッスン ${td}/${Tutorial.count()} クリア`;
     setCursor(document.querySelector('.title-menu .rpg-item:not([hidden])'));
   }
 
@@ -252,6 +265,13 @@
     $('continueBtn').addEventListener('click', (e) => titleGo(e.currentTarget, showGame));
     $('storyBtn').addEventListener('click', (e) => titleGo(e.currentTarget, enterStory));
     $('freeBtn').addEventListener('click', (e) => titleGo(e.currentTarget, showMenu));
+    $('tutorialBtn').addEventListener('click', (e) => titleGo(e.currentTarget, Tutorial.showList));
+    $('tutorialBack').addEventListener('click', goBack);
+    $('lessonBack').addEventListener('click', goBack);
+    $('settingsInstall').addEventListener('click', () => Pwa.openGuide());
+    $('tutorialInstall').addEventListener('click', () => Pwa.openGuide());
+    $('installBack').addEventListener('click', goBack);
+    $('installModal').addEventListener('click', (e) => { if (e.target === $('installModal')) goBack(); });
     $('settingsBtn').addEventListener('click', () => { syncMenu(); $('settingsModal').hidden = false; syncHistory(); });
     $('settingsBack').addEventListener('click', goBack);
     $('settingsModal').addEventListener('click', (e) => { if (e.target === $('settingsModal')) goBack(); });
@@ -279,6 +299,8 @@
     $('title').hidden = true;
     $('menu').hidden = true;
     $('story').hidden = true;
+    $('tutorial').hidden = true;
+    $('lesson').hidden = true;
     $('game').hidden = false;
     const isStory = state.mode === 'story';
     $('gameTitle').textContent = isStory
@@ -849,6 +871,8 @@
     hideBubble();
     $('title').hidden = true;
     $('menu').hidden = true;
+    $('tutorial').hidden = true;
+    $('lesson').hidden = true;
     $('game').hidden = true;
     $('story').hidden = false;
     setMusic('map');
@@ -1135,11 +1159,12 @@
   initMenu();
   initGameControls();
   initStory();
+  Tutorial.init({ onlyScreen, setMusic, syncHistory });
   initTitle();
   initReview();
   initDebug();
   initButtonFeedback();
   applyFeedbackSettings();
   setMusic('title');
-  Pwa.init();
+  Pwa.init({ afterOpen: syncHistory });
 })();

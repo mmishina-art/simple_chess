@@ -61,6 +61,9 @@
         <button type="button" id="freeBtn" class="rpg-item">
           <span class="rpg-label">フリー対戦<small>CPU対戦・2人対戦</small></span>
         </button>
+        <button type="button" id="tutorialBtn" class="rpg-item">
+          <span class="rpg-label">あそびかた<small id="tutorialSub">チェスのルールを覚えよう</small></span>
+        </button>
         <button type="button" id="settingsBtn" class="rpg-item">
           <span class="rpg-label">せってい<small>効果音・BGM・振動</small></span>
         </button>
@@ -141,6 +144,10 @@
           <button type="button" data-value="off">オフ</button>
         </div>
       </section>
+      <section>
+        <h2>アプリ</h2>
+        <button type="button" id="settingsInstall" class="btn wide">アプリとしてインストールする方法</button>
+      </section>
       <section id="hapticSection">
         <h2>振動</h2>
         <div class="seg" data-name="haptic" role="radiogroup">
@@ -150,6 +157,48 @@
       </section>
     </div>
   </div>
+
+  <!-- あそびかた: レッスン一覧 -->
+  <main id="tutorial" class="screen" hidden>
+    <header class="topbar">
+      <button type="button" id="tutorialBack" class="back-btn" aria-label="タイトルにもどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+      <span class="topbar-spacer"></span>
+      <div id="lessonCount" class="story-count"></div>
+    </header>
+    <div class="mode-title">
+      <small>TUTORIAL</small>
+      <h1><span class="mt-orn" aria-hidden="true"></span><span class="mt-text">あそびかた</span><span class="mt-orn" aria-hidden="true"></span></h1>
+      <p>ピピと一緒にルールを覚えよう</p>
+    </div>
+    <div id="lessonList" class="story-list"></div>
+    <div class="story-list">
+      <button type="button" id="tutorialInstall" class="lesson-card install-card">
+        <span class="lesson-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M9 10l3 3 3-3M8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <span class="lesson-info"><span class="lesson-no">おまけ</span><strong>アプリとしてインストール</strong><small>ホーム画面から遊べるようにする方法</small></span>
+        <span class="lesson-badge">見る</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- あそびかた: レッスン -->
+  <main id="lesson" class="screen" hidden>
+    <header class="topbar">
+      <button type="button" id="lessonBack" class="back-btn" aria-label="レッスン一覧にもどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+      <h1 id="lessonTitle" class="title"></h1>
+    </header>
+    <div class="lesson-body">
+      <div id="tutTalk" class="tut-talk" role="button" tabindex="0" aria-live="polite">
+        <span id="tutAv" class="tut-av"></span>
+        <p class="tut-bubble"><span id="tutText"></span><span id="tutMore" class="tut-more">タップで次へ &#9660;</span></p>
+      </div>
+      <div id="tutBoard" class="tboard" aria-label="練習用の盤"></div>
+      <div id="lessonGoal" class="lesson-goal"></div>
+      <div class="lesson-actions">
+        <button type="button" id="lessonRetry" class="btn">やりなおす</button>
+        <button type="button" id="lessonNext" class="btn primary" hidden>つぎのレッスンへ</button>
+      </div>
+    </div>
+  </main>
 
   <!-- ストーリー: ステージ選択 -->
   <main id="story" class="screen" hidden>
@@ -217,6 +266,51 @@
       </aside>
     </div>
   </main>
+
+  <!-- インストール方法 -->
+  <div id="installModal" class="modal" hidden>
+    <div class="modal-card rpg-window settings-card install-card-modal">
+      <header class="settings-head">
+        <button type="button" id="installBack" class="back-btn" aria-label="もどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+      </header>
+      <div class="mode-title">
+        <small>INSTALL</small>
+        <h1><span class="mt-orn" aria-hidden="true"></span><span class="mt-text">インストール</span><span class="mt-orn" aria-hidden="true"></span></h1>
+        <p>ホーム画面からアプリのように遊べる</p>
+      </div>
+      <p id="installDone" class="install-done" hidden>&#10003;&#xFE0E; このアプリは、もうインストールされています！</p>
+      <button type="button" id="installNow" class="btn primary wide" hidden>今すぐインストール</button>
+      <div class="install-tabs" role="tablist">
+        <button type="button" role="tab" data-tab="ios">iPhone・iPad</button>
+        <button type="button" role="tab" data-tab="android">Android</button>
+        <button type="button" role="tab" data-tab="pc">パソコン</button>
+      </div>
+      <ol class="install-steps" data-panel="ios">
+        <li><b>Safari</b> でこのページを開きます（ほかのブラウザでは追加できないことがあります）</li>
+        <li>画面下（iPadは右上）の <b>共有ボタン</b> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9H6v11h12V9h-2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> をタップ</li>
+        <li>メニューを下にスクロールして <b>「ホーム画面に追加」</b> を選びます</li>
+        <li>右上の <b>「追加」</b> をタップ</li>
+        <li>ホーム画面にできた <b>チェスクエスト</b> のアイコンから遊べます</li>
+      </ol>
+      <ol class="install-steps" data-panel="android" hidden>
+        <li><b>Chrome</b> でこのページを開きます</li>
+        <li>右上の <b>メニュー</b> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg> をタップ</li>
+        <li><b>「アプリをインストール」</b> または <b>「ホーム画面に追加」</b> を選びます</li>
+        <li><b>「インストール」</b> をタップ</li>
+        <li>ホーム画面やアプリ一覧の <b>チェスクエスト</b> から遊べます</li>
+      </ol>
+      <ol class="install-steps" data-panel="pc" hidden>
+        <li><b>Chrome</b> か <b>Edge</b> でこのページを開きます</li>
+        <li>アドレスバーの右はしにある <b>インストール</b> のアイコン <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M9 10l3 3 3-3M8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> をクリック</li>
+        <li>見つからないときは、右上のメニューから <b>「アプリをインストール」</b> を探してください</li>
+        <li><b>「インストール」</b> をクリックすると、デスクトップやスタートメニューから遊べます</li>
+      </ol>
+      <ul class="install-notes">
+        <li>インストールすると、インターネットにつながっていなくても遊べます。</li>
+        <li>新しいバージョンが出ると、画面の下に「更新」ボタンが出ます。</li>
+      </ul>
+    </div>
+  </div>
 
   <!-- ストーリーの会話シーン -->
   <div id="scene" class="scene" hidden>
@@ -299,6 +393,7 @@
   <script src="story.js"></script>
   <script src="scene.js"></script>
   <script src="pwa.js"></script>
+  <script src="tutorial.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

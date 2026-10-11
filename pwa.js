@@ -41,28 +41,66 @@
     $('updateLater').addEventListener('click', () => { $('updateBar').hidden = true; });
   }
 
-  function init() {
+  // ---- インストール方法の説明 ----
+  let deferred = null; // ブラウザのインストール案内（Android / パソコンの Chrome・Edge など）
+  const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+  function detectPlatform() {
+    const ua = navigator.userAgent;
+    if (/iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+    if (/android/i.test(ua)) return 'android';
+    return 'pc';
+  }
+
+  function selectTab(name) {
+    document.querySelectorAll('#installModal [data-tab]').forEach((b) => {
+      const on = b.dataset.tab === name;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on);
+    });
+    document.querySelectorAll('#installModal [data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
+  }
+
+  function refreshGuide() {
+    $('installDone').hidden = !isStandalone();
+    $('installNow').hidden = !deferred || isStandalone();
+  }
+
+  let opts = {};
+  function openGuide() {
+    refreshGuide();
+    selectTab(detectPlatform());
+    $('installModal').hidden = false;
+    if (opts.afterOpen) opts.afterOpen();
+  }
+
+  function init(o) {
+    opts = o || {};
     if ('serviceWorker' in navigator && location.protocol !== 'file:') initUpdates();
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-    const hint = $('installHint');
-    let deferred = null;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferred = e;
-      hint.hidden = false;
-      hint.innerHTML = '<button type="button" class="btn small" id="installBtn">ホーム画面に追加</button>';
-      $('installBtn').addEventListener('click', async () => {
-        deferred.prompt();
-        await deferred.userChoice;
-        deferred = null;
-        hint.hidden = true;
-      });
+      refreshGuide();
     });
-    if (!standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
-      hint.hidden = false;
-      hint.textContent = '共有ボタン →「ホーム画面に追加」でアプリとして使えます';
-    }
+    window.addEventListener('appinstalled', () => { deferred = null; refreshGuide(); updateHint(); });
+    $('installNow').addEventListener('click', async () => {
+      if (!deferred) return;
+      deferred.prompt();
+      await deferred.userChoice;
+      deferred = null;
+      refreshGuide();
+    });
+    document.querySelectorAll('#installModal [data-tab]').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+    $('installHint').addEventListener('click', (e) => { if (e.target.closest('button')) openGuide(); });
+    updateHint();
   }
 
-  window.Pwa = { init };
+  // タイトル画面の下に、インストール方法への入口を出す（インストール済みなら出さない）
+  function updateHint() {
+    const hint = $('installHint');
+    hint.hidden = isStandalone();
+    hint.innerHTML = '<button type="button" class="link-btn">アプリとしてインストールする方法</button>';
+  }
+
+  window.Pwa = { init, openGuide, isStandalone };
 })();
