@@ -589,3 +589,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (max-height: 560px) {
   .logo-sub, .logo-en { display: none; }
 }
+
+/* タイトル表示中はページ全体を固定（スクロール・引っぱりをさせない） */
+html.lock, html.lock body { overflow: hidden; overscroll-behavior: none; height: 100%; }
+html.lock body { position: fixed; inset: 0; }
+.title-screen { touch-action: none; }
+
+/* インストール方法: 3機種の手順を同じ場所に重ね、欄の高さを一番長いものにそろえる（タブを替えても窓がずれない） */
+.install-panels { display: grid; }
+.install-panels > .install-steps { grid-area: 1 / 1; }
+.install-steps.off { visibility: hidden; }

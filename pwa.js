@@ -58,7 +58,11 @@
       b.classList.toggle('on', on);
       b.setAttribute('aria-selected', on);
     });
-    document.querySelectorAll('#installModal [data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
+    document.querySelectorAll('#installModal [data-panel]').forEach((p) => {
+      const on = p.dataset.panel === name;
+      p.classList.toggle('off', !on);
+      p.setAttribute('aria-hidden', !on);
+    });
   }
 
   function refreshGuide() {

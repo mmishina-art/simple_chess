@@ -154,6 +154,7 @@
     syncMenu();
     storyBannerUpdate();
     syncHistory();
+    lockScroll();
   }
 
   // ---- 「もどる」の統一（画面のボタンと、Android の戻る操作・ブラウザの戻る） ----
@@ -161,6 +162,12 @@
   let ignorePop = false;
   function onlyScreen(id) {
     document.querySelectorAll('main.screen').forEach((m) => { m.hidden = m.id !== id; });
+    lockScroll();
+  }
+
+  // タイトル画面ではページのスクロールと iPhone の引っぱり（ラバーバンド）を止める
+  function lockScroll() {
+    document.documentElement.classList.toggle('lock', !$('title').hidden);
   }
 
   function syncHistory() {
@@ -203,6 +210,7 @@
     $('story').hidden = true;
     $('menu').hidden = true;
     $('title').hidden = false;
+    document.documentElement.classList.add('lock');
     setMusic('title');
     updateTitle();
     syncHistory();
@@ -272,7 +280,6 @@
     $('lessonBack').addEventListener('click', goBack);
     $('settingsInstall').addEventListener('click', () => Pwa.openGuide());
     $('installItem').addEventListener('click', () => Pwa.openGuide());
-    $('tutorialInstall').addEventListener('click', () => Pwa.openGuide());
     $('installBack').addEventListener('click', goBack);
     $('installModal').addEventListener('click', (e) => { if (e.target === $('installModal')) goBack(); });
     $('settingsBtn').addEventListener('click', () => { syncMenu(); $('settingsModal').hidden = false; syncHistory(); });
@@ -318,6 +325,7 @@
     render();
     afterMove(null);
     syncHistory();
+    lockScroll();
   }
 
   // 棋譜（UCIの列）から局面を再構築
@@ -905,6 +913,7 @@
     const next = list.querySelector('.next');
     if (next) setTimeout(() => next.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
     syncHistory();
+    lockScroll();
   }
 
   // タイトルから「ストーリーモード」: 初めての時はプロローグ → 第1話へそのまま進む
@@ -1169,5 +1178,6 @@
   initButtonFeedback();
   applyFeedbackSettings();
   setMusic('title');
+  lockScroll();
   Pwa.init({ afterOpen: syncHistory });
 })();

@@ -173,13 +173,6 @@
       <p>ピピと一緒にルールを覚えよう</p>
     </div>
     <div id="lessonList" class="story-list"></div>
-    <div class="story-list">
-      <button type="button" id="tutorialInstall" class="lesson-card install-card">
-        <span class="lesson-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M9 10l3 3 3-3M8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
-        <span class="lesson-info"><span class="lesson-no">おまけ</span><strong>アプリとしてインストール</strong><small>ホーム画面から遊べるようにする方法</small></span>
-        <span class="lesson-badge">見る</span>
-      </button>
-    </div>
   </main>
 
   <!-- あそびかた: レッスン -->
@@ -287,6 +280,7 @@
         <button type="button" role="tab" data-tab="android">Android</button>
         <button type="button" role="tab" data-tab="pc">パソコン</button>
       </div>
+      <div class="install-panels">
       <ol class="install-steps" data-panel="ios">
         <li><b>Safari</b> でこのページを開きます（ほかのブラウザでは追加できないことがあります）</li>
         <li>画面下（iPadは右上）の <b>共有ボタン</b> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 9H6v11h12V9h-2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v11M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> をタップ</li>
@@ -294,19 +288,20 @@
         <li>右上の <b>「追加」</b> をタップ</li>
         <li>ホーム画面にできた <b>チェスクエスト</b> のアイコンから遊べます</li>
       </ol>
-      <ol class="install-steps" data-panel="android" hidden>
+      <ol class="install-steps" data-panel="android">
         <li><b>Chrome</b> でこのページを開きます</li>
         <li>右上の <b>メニュー</b> <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg> をタップ</li>
         <li><b>「アプリをインストール」</b> または <b>「ホーム画面に追加」</b> を選びます</li>
         <li><b>「インストール」</b> をタップ</li>
         <li>ホーム画面やアプリ一覧の <b>チェスクエスト</b> から遊べます</li>
       </ol>
-      <ol class="install-steps" data-panel="pc" hidden>
+      <ol class="install-steps" data-panel="pc">
         <li><b>Chrome</b> か <b>Edge</b> でこのページを開きます</li>
         <li>アドレスバーの右はしにある <b>インストール</b> のアイコン <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v6M9 10l3 3 3-3M8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> をクリック</li>
         <li>見つからないときは、右上のメニューから <b>「アプリをインストール」</b> を探してください</li>
         <li><b>「インストール」</b> をクリックすると、デスクトップやスタートメニューから遊べます</li>
       </ol>
+      </div>
       <ul class="install-notes">
         <li>インストールすると、インターネットにつながっていなくても遊べます。</li>
         <li>新しいバージョンが出ると、画面の下に「更新」ボタンが出ます。</li>
