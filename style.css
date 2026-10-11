@@ -14,7 +14,10 @@
   --hint: rgba(20, 30, 20, .35);
   --sq: 40px;
   /* 盤の大きさ: 画面の高さから、上のバー・対局者・状態・ボタン・棋譜の帯の分（約330px）を引いた残り */
-  --safe-v: calc(env(safe-area-inset-top) + env(safe-area-inset-bottom));
+  /* iPhone の画面上端（ステータスバーの下）はぼかしがかかるので、上に少し余白をとる */
+  --top-gap: 24px;
+  --safe-top: calc(env(safe-area-inset-top) + var(--top-gap));
+  --safe-v: calc(var(--safe-top) + env(safe-area-inset-bottom));
   --board: min(94vw, calc(100dvh - var(--safe-v) - 330px), 560px);
 }
 
@@ -218,9 +221,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .stage-card.locked .stage-info strong, .stage-card.locked .stage-info small { color: var(--muted); }
 .stage-av { width: 64px; height: 64px; flex: none; }
 .stage-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.stage-no { font-size: .75rem; color: var(--muted); }
-.stage-info strong { font-size: 1.08rem; }
-.stage-info small { font-size: .8rem; color: var(--muted); }
+.stage-no { font-size: .85rem; color: var(--muted); }
+.stage-info strong { font-size: 1.22rem; }
+.stage-info small { font-size: .92rem; color: var(--muted); }
 .stage-badge { font-size: .8rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: rgba(255, 255, 255, .08); white-space: nowrap; }
 .stage-card.cleared .stage-badge { background: #2f6b43; color: #d6ffe2; }
 .stage-card.next .stage-badge { background: var(--accent); color: var(--accent-text); }
@@ -244,12 +247,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .scene {
   position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; justify-content: flex-end;
   background: radial-gradient(circle at 50% 35%, #3a4d6a 0%, #1a2230 70%);
-  padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 16px);
+  padding: calc(var(--safe-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 16px);
   cursor: pointer;
 }
 .scene.dark { background: radial-gradient(circle at 50% 35%, #4a1424 0%, #0d0408 70%); }
-.scene-chapter { position: absolute; top: calc(env(safe-area-inset-top) + 16px); left: 16px; right: 110px; color: #e8e2d0; font-size: .85rem; font-weight: 700; letter-spacing: .05em; opacity: .85; }
-.scene-skip { position: absolute; top: calc(env(safe-area-inset-top) + 8px); right: 12px; border: 0; background: rgba(255, 255, 255, .12); border-radius: 99px; padding: 8px 14px; font-size: .85rem; }
+.scene-chapter { position: absolute; top: calc(var(--safe-top) + 14px); left: 16px; right: 120px; color: #fff3cf; font-size: clamp(1rem, 4.4vw, 1.2rem); font-weight: 800; letter-spacing: .05em; line-height: 1.35; text-shadow: 0 2px 4px rgba(0, 0, 0, .6); }
+.scene-skip { position: absolute; top: calc(var(--safe-top) + 6px); right: 12px; border: 0; background: rgba(255, 255, 255, .16); border-radius: 99px; padding: 10px 18px; font-size: 1rem; font-weight: 700; }
 .scene-stage { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
 .scene-portrait { width: min(62vw, 42vh, 300px); aspect-ratio: 1; transition: opacity .25s, transform .25s, filter .25s; }
 .scene-portrait.dim { opacity: .35; filter: grayscale(.5); transform: scale(.94); }
@@ -258,16 +261,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .scene-box {
   position: relative; width: 100%; max-width: 640px; margin: 0 auto; min-height: 9.5em;
   background: rgba(16, 20, 28, .88); border: 2px solid rgba(255, 255, 255, .18); border-radius: 16px;
-  padding: 26px 18px 18px;
+  padding: 28px 18px 22px;
 }
 .scene-name {
   position: absolute; top: -16px; left: 14px; background: var(--accent); color: var(--accent-text);
-  font-weight: 800; padding: 4px 14px; border-radius: 10px; font-size: .95rem;
+  font-weight: 800; padding: 5px 16px; border-radius: 10px; font-size: clamp(1rem, 4.4vw, 1.2rem);
 }
 .scene.me .scene-name { background: #6fc3ff; color: #082033; left: auto; right: 14px; }
 .scene.narration .scene-name { display: none; }
 .scene.narration .scene-text { color: #d8d2c0; font-style: italic; }
-.scene-text { margin: 0; font-size: 1.05rem; line-height: 1.75; color: #fff; white-space: pre-wrap; }
+.scene-text { margin: 0; font-size: clamp(1.15rem, 5vw, 1.4rem); line-height: 1.7; color: #fff; white-space: pre-wrap; }
 .scene-next { position: absolute; right: 16px; bottom: 8px; font-size: .8rem; color: var(--accent); animation: blink 1s infinite; }
 @keyframes blink { 50% { opacity: .2; } }
 
@@ -570,7 +573,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ---- タイトル画面: スクロールせず1画面に収める（画面の高さに合わせて縮める） ---- */
 .title-inner {
   gap: clamp(8px, 2.6vh, 26px);
-  padding-top: calc(env(safe-area-inset-top) + clamp(8px, 2vh, 24px));
+  padding-top: calc(var(--safe-top) + clamp(0px, 1vh, 12px));
   padding-bottom: calc(env(safe-area-inset-bottom) + clamp(8px, 2vh, 28px));
 }
 .emblem { font-size: clamp(36px, 8vh, 72px); }
@@ -602,14 +605,14 @@ html.lock body { position: fixed; inset: 0; }
 .install-panels > .install-steps { grid-area: 1 / 1; }
 .install-steps.off { visibility: hidden; }
 
-main.screen:not(.title-screen) { padding-top: env(safe-area-inset-top); }
+main.screen:not(.title-screen) { padding-top: var(--safe-top); }
 
 /* ---- スクロールの方針: ページ自体は動かさず、必要な部分（.screen-scroll）だけスクロールする ---- */
 html, body { overflow: hidden; overscroll-behavior: none; }
 body { position: fixed; inset: 0; }
 main.screen:not(.title-screen) {
   position: fixed; inset: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: var(--safe-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .screen-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 /* 入りきるときは中央に、入りきらないときだけスクロール（上が切れないよう margin:auto で中央寄せ） */
@@ -698,3 +701,5 @@ html, body { background: #0f0d24; }
   z-index: 2; font-size: .72rem; letter-spacing: .08em; color: rgba(220, 214, 255, .55); pointer-events: none;
 }
 .settings-version { order: 99; margin: 26px 0 0; text-align: center; font-size: .8rem; color: #9aa3d6; letter-spacing: .06em; }
+/* 背の低い画面では上の余白を控えめにして、対局画面を1画面に収める */
+@media (max-height: 600px) { :root { --top-gap: 8px; } }
