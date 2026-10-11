@@ -1,6 +1,6 @@
 /* シンプルチェス: Service Worker（オフライン対応）
  * ファイルを更新したら CACHE のバージョンを上げること。 */
-const CACHE = 'simple-chess-v23';
+const CACHE = 'simple-chess-v24';
 const ASSETS = [
   './',
   'index.html',

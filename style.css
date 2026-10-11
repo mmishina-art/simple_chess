@@ -291,7 +291,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- タイトル画面（ファンタジーRPG風） ---- */
 .title-screen {
-  position: relative; height: 100vh; height: 100dvh; overflow: hidden;
+  /* 安全領域（ノッチ・ダイナミックアイランド）も含めて画面全体を覆い、余白は内側（.title-inner）で取る */
+  position: fixed; inset: 0; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(#0b0a24 0%, #1d1a4a 55%, #3a2552 100%);
 }
