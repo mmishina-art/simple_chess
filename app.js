@@ -79,6 +79,8 @@
   function loadStory() {
     try { Object.assign(story, JSON.parse(localStorage.getItem(STORY_KEY) || '{}')); } catch (e) { /* 無視 */ }
     if (!story.stars) story.stars = {};
+    // 星評価が無かった頃にクリアした話は ★1 として記録する（表示と合計をそろえる）
+    for (let n = 1; n <= story.cleared; n++) if (!story.stars[n]) story.stars[n] = 1;
   }
 
   function load() {
