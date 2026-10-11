@@ -291,7 +291,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- タイトル画面（ファンタジーRPG風） ---- */
 .title-screen {
-  position: relative; min-height: 100%; overflow: hidden;
+  position: relative; min-height: 100%; overflow-x: hidden;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(#0b0a24 0%, #1d1a4a 55%, #3a2552 100%);
 }

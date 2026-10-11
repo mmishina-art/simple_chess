@@ -91,16 +91,14 @@
       refreshGuide();
     });
     document.querySelectorAll('#installModal [data-tab]').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
-    $('installHint').addEventListener('click', (e) => { if (e.target.closest('button')) openGuide(); });
     updateHint();
   }
 
-  // タイトル画面の下に、インストール方法への入口を出す（インストール済みなら出さない）
+  // タイトルのメニューの「インストール」は、インストール済みなら出さない
   function updateHint() {
-    const hint = $('installHint');
-    hint.hidden = isStandalone();
-    hint.innerHTML = '<button type="button" class="link-btn">アプリとしてインストールする方法</button>';
+    $('installItem').hidden = isStandalone();
   }
+
 
   window.Pwa = { init, openGuide, isStandalone };
 })();

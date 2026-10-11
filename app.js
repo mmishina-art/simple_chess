@@ -269,6 +269,7 @@
     $('tutorialBack').addEventListener('click', goBack);
     $('lessonBack').addEventListener('click', goBack);
     $('settingsInstall').addEventListener('click', () => Pwa.openGuide());
+    $('installItem').addEventListener('click', () => Pwa.openGuide());
     $('tutorialInstall').addEventListener('click', () => Pwa.openGuide());
     $('installBack').addEventListener('click', goBack);
     $('installModal').addEventListener('click', (e) => { if (e.target === $('installModal')) goBack(); });
