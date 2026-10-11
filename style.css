@@ -23,7 +23,8 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
   overscroll-behavior: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* 上の安全領域（時計・電池の帯）は各画面の側で取り、画面の背景色が帯まで届くようにする */
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -599,3 +600,5 @@ html.lock body { position: fixed; inset: 0; }
 .install-panels { display: grid; }
 .install-panels > .install-steps { grid-area: 1 / 1; }
 .install-steps.off { visibility: hidden; }
+
+main.screen:not(.title-screen) { padding-top: env(safe-area-inset-top); }
