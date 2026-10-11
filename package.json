@@ -1,0 +1,8 @@
+{
+  "name": "simple-chess-quest",
+  "private": true,
+  "description": "シンプルチェスクエスト（PWA）。ビルド不要、テストは Node.js 標準のテストランナーで実行",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\""
+  }
+}
