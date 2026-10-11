@@ -462,3 +462,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @keyframes starPop { from { transform: scale(0) rotate(-40deg); opacity: 0; } to { transform: none; opacity: 1; } }
 .stage-side { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
 .stage-stars { color: #ffd23f; font-size: .95rem; letter-spacing: .06em; text-shadow: 0 0 6px rgba(255, 210, 63, .5); }
+
+/* ---- 対局の振り返り ---- */
+.review-bar { display: flex; align-items: center; gap: 6px; background: var(--panel); border-radius: 12px; padding: 6px; }
+.rv-btn { flex: none; width: 52px; height: 44px; border: 0; border-radius: 10px; background: var(--panel-2); font-size: 1.5rem; line-height: 1; transition: transform .08s; }
+.rv-btn:active { transform: scale(.92); filter: brightness(1.2); }
+.rv-pos { flex: 1; text-align: center; font-weight: 700; font-size: .95rem; }
+.status.review { color: #8fd3ff; }
+.moves .mv { cursor: pointer; border-radius: 6px; padding: 0 4px; margin-left: -4px; }
+.moves .mv.cur { background: rgba(224, 176, 76, .16); }

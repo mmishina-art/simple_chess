@@ -298,6 +298,8 @@
   // 棋譜（UCIの列）から局面を再構築
   function rebuild() {
     clearHint();
+    viewPly = null;
+    viewGame = null;
     game = new Chess();
     sanList = [];
     const valid = [];
@@ -350,13 +352,48 @@
     return state.mode === 'pvp' || game.turn === state.human;
   }
 
+  // ---- 対局の振り返り（棋譜の好きな局面を表示） ----
+  let viewPly = null, viewGame = null; // null = 最新の局面
+  function shownGame() { return viewPly === null ? game : viewGame; }
+
+  function setView(ply) {
+    if (ply === null || ply >= state.moves.length) { viewPly = null; viewGame = null; }
+    else {
+      viewPly = Math.max(0, ply);
+      viewGame = new Chess();
+      for (const u of state.moves.slice(0, viewPly)) viewGame.makeMove(viewGame.moveFromUci(u));
+    }
+    selected = -1;
+    legalFromSelected = [];
+    render();
+  }
+
+  function initReview() {
+    $('reviewBar').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-rv]');
+      if (!b) return;
+      const cur = viewPly === null ? state.moves.length : viewPly;
+      const to = { first: 0, prev: cur - 1, next: cur + 1, last: null }[b.dataset.rv];
+      if (to !== null && (to < 0 || to > state.moves.length)) { fx.play('error'); return; }
+      fx.play('select');
+      setView(to);
+    });
+    $('moveList').addEventListener('click', (e) => {
+      const mv = e.target.closest('[data-ply]');
+      if (!mv) return;
+      fx.play('select');
+      setView(+mv.dataset.ply);
+    });
+  }
+
   function canInteract() {
-    return !flipping && !state.over && !thinking && isHumanTurn() && $('promoModal').hidden;
+    return viewPly === null && !flipping && !state.over && !thinking && isHumanTurn() && $('promoModal').hidden;
   }
 
   function render() {
-    const last = game.stack.length ? game.stack[game.stack.length - 1].m : null;
-    const checkSq = game.inCheck() ? game.kings[game.turn] : -1;
+    const g = shownGame();
+    const last = g.stack.length ? g.stack[g.stack.length - 1].m : null;
+    const checkSq = g.inCheck() ? g.kings[g.turn] : -1;
     const targets = new Map(legalFromSelected.map((m) => [m.to, m]));
 
     for (let v = 0; v < 64; v++) {
@@ -378,7 +415,7 @@
       el.className = cls.join(' ');
 
       let html = '';
-      const p = game.board[sq];
+      const p = g.board[sq];
       if (p) html += pieceHtml(p);
       if (v % 8 === 0) html += `<span class="coord rank">${8 - r}</span>`;
       if (v >= 56) html += `<span class="coord file">${'abcdefgh'[c]}</span>`;
@@ -442,7 +479,8 @@
     // 盤上に残っていない駒 = 取られた駒
     const counts = { w: { p: 8, n: 2, b: 2, r: 2, q: 1 }, b: { p: 8, n: 2, b: 2, r: 2, q: 1 } };
     const material = { w: 0, b: 0 };
-    for (const p of game.board) {
+    const g = shownGame();
+    for (const p of g.board) {
       if (!p) continue;
       const t = p.toLowerCase(), c = Chess.colorOf(p);
       if (t === 'k') continue;
@@ -452,7 +490,7 @@
     }
     const setPlayer = (el, color) => {
       el.className = 'player ' + (color === 'w' ? 'white' : 'black') +
-        (!state.over && game.turn === color ? ' active' : '');
+        (!state.over && g.turn === color ? ' active' : '');
       let name = COLOR_NAME[color];
       if (state.mode === 'story') name = (color === state.human ? 'きみ' : stageInfo().name) + `（${name}）`;
       else if (state.mode === 'cpu') name = (color === state.human ? 'あなた' : 'CPU') + `（${name}）`;
@@ -497,6 +535,14 @@
   function renderStatus() {
     const el = $('status');
     el.className = 'status';
+    const showBar = state.moves.length > 0 && (state.over || viewPly !== null);
+    $('reviewBar').hidden = !showBar;
+    if (showBar) $('reviewPos').textContent = `${viewPly === null ? state.moves.length : viewPly} / ${state.moves.length} 手目`;
+    if (viewPly !== null) {
+      el.textContent = state.over ? '振り返り中（» で最後の局面へ）' : '振り返り中（盤をタップで最新へ）';
+      el.classList.add('review');
+      return;
+    }
     const st = game.status();
     if (st.over) {
       const r = resultMessage(st);
@@ -521,16 +567,17 @@
 
   function renderMoves() {
     const el = $('moveList');
+    const cur = (viewPly === null ? sanList.length : viewPly) - 1; // 表示中の局面に至った手
+    const mv = (i) => `<span class="mv${i === cur ? ' cur' : ''}" data-ply="${i + 1}">${sanList[i]}</span>`;
     let html = '';
     for (let i = 0; i < sanList.length; i += 2) {
       html += `<span class="no">${i / 2 + 1}.</span>`;
-      html += `<span class="mv${i === sanList.length - 1 ? ' cur' : ''}">${sanList[i]}</span>`;
-      html += sanList[i + 1] !== undefined
-        ? `<span class="mv${i + 1 === sanList.length - 1 ? ' cur' : ''}">${sanList[i + 1]}</span>`
-        : '<span></span>';
+      html += mv(i);
+      html += sanList[i + 1] !== undefined ? mv(i + 1) : '<span></span>';
     }
     el.innerHTML = html;
-    el.scrollTop = el.scrollHeight;
+    if (viewPly === null) el.scrollTop = el.scrollHeight;
+    else { const c = el.querySelector('.cur'); if (c) c.scrollIntoView({ block: 'nearest' }); }
   }
 
   // ---- 盤の操作（タップ・ドラッグ） ----
@@ -568,6 +615,7 @@
     if (e.button > 0 || drag) return;
     const el = e.target.closest('.sq');
     if (!el || animating) return;
+    if (viewPly !== null && !state.over) { fx.play('select'); setView(null); return; }
     if (!canInteract()) {
       if (!state.over && thinking) fx.play('error');
       return;
@@ -1239,6 +1287,7 @@
   initGameControls();
   initStory();
   initTitle();
+  initReview();
   initDebug();
   initButtonFeedback();
   applyFeedbackSettings();

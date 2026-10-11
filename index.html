@@ -199,7 +199,14 @@
           <button type="button" id="flipBtn" class="btn">盤を反転</button>
           <button type="button" id="newBtn" class="btn">新しい対局</button>
         </div>
-        <div id="moveList" class="moves" aria-label="棋譜"></div>
+        <div id="reviewBar" class="review-bar" hidden>
+          <button type="button" class="rv-btn" data-rv="first" aria-label="最初の局面">&laquo;</button>
+          <button type="button" class="rv-btn" data-rv="prev" aria-label="1手もどす">&lsaquo;</button>
+          <span id="reviewPos" class="rv-pos"></span>
+          <button type="button" class="rv-btn" data-rv="next" aria-label="1手すすむ">&rsaquo;</button>
+          <button type="button" class="rv-btn" data-rv="last" aria-label="最新の局面">&raquo;</button>
+        </div>
+        <div id="moveList" class="moves" aria-label="棋譜（タップでその局面を表示）"></div>
       </aside>
     </div>
   </main>
