@@ -333,7 +333,7 @@
 
   function pieceHtml(p) {
     const color = Chess.colorOf(p);
-    return `<span class="piece ${color}">${GLYPH[p.toLowerCase()]}${VS}</span>`;
+    return `<span class="piece ${color}">${Pieces.svg(p)}</span>`;
   }
 
   function isHumanTurn() {
@@ -417,8 +417,9 @@
       el.querySelector('.dot').hidden = !!avKey;
       const enemy = color === 'w' ? 'b' : 'w';
       let caps = '';
-      for (const t of ['q', 'r', 'b', 'n', 'p']) caps += (GLYPH[t] + VS).repeat(Math.max(0, counts[enemy][t]));
-      el.querySelector('.captured').textContent = caps;
+      for (const t of ['q', 'r', 'b', 'n', 'p']) caps += pieceHtml(enemy === 'w' ? t.toUpperCase() : t).repeat(Math.max(0, counts[enemy][t]));
+      const capEl = el.querySelector('.captured');
+      if (capEl.dataset.html !== caps) { capEl.dataset.html = caps; capEl.innerHTML = caps; }
       const diff = material[color] - material[enemy];
       el.querySelector('.adv').textContent = diff > 0 ? `+${diff}` : '';
     };

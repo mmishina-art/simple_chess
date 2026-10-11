@@ -86,10 +86,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .player.white .dot { background: #fff; }
 .player.black .dot { background: #111; border-color: #aaa; }
 .player.active .name { color: var(--accent); font-weight: 700; }
-.player .captured {
-  font-family: "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
-  font-size: 1.05rem; letter-spacing: -.12em; color: var(--muted); overflow: hidden; white-space: nowrap; flex: 1;
-}
+.player .captured { display: flex; align-items: center; overflow: hidden; white-space: nowrap; flex: 1; min-width: 0; }
+.player .captured .piece { --sq: 22px; width: 20px; height: 20px; margin-right: -6px; flex: none; }
 .player .adv { color: var(--muted); font-size: .85rem; }
 
 #board {
@@ -116,13 +114,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sq.dark .coord { color: var(--light); }
 
 .piece {
-  position: relative; z-index: 1; pointer-events: none;
-  font-family: "DejaVu Sans", "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif;
-  font-size: calc(var(--sq) * .82); line-height: 1;
+  position: relative; z-index: 1; pointer-events: none; display: block;
+  width: calc(var(--sq) * .9); height: calc(var(--sq) * .9);
   transition: transform .12s;
 }
-.piece.w { color: #fff; -webkit-text-stroke: calc(var(--sq) * .028) #222; paint-order: stroke fill; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
-.piece.b { color: #161616; -webkit-text-stroke: calc(var(--sq) * .012) #000; text-shadow: 0 1px 1px rgba(255, 255, 255, .25); }
+.piece-svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* 白駒: 白地に黒の縁 / 黒駒: 黒地に白い模様線 */
+.piece.w { --pf: #fbfaf6; --ps: #1e1e1e; --pd: #1e1e1e; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .45)); }
+.piece.b { --pf: #1d1d1f; --ps: #000; --pd: #e9e6dc; filter: drop-shadow(0 1px 1px rgba(255, 255, 255, .18)); }
+.piece-svg { fill: var(--pf); stroke: var(--ps); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.piece-svg .d { stroke: var(--pd); stroke-width: 1.2; }
+.piece-svg .e { fill: var(--pd); stroke: none; }
+.piece-svg .x { stroke: var(--ps); stroke-width: 2.6; }
+.piece.b .piece-svg .x { stroke: var(--pf); }
 .sq.sel .piece { transform: scale(1.1); }
 .sq .piece.moving { z-index: 3; }
 .sq.dragging .piece { opacity: .25; transform: none; }
