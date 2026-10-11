@@ -69,7 +69,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hint { color: var(--muted); font-size: .8rem; text-align: center; margin: 16px 0 0; line-height: 1.5; }
 
 /* ---- 対局画面 ---- */
-#game { display: flex; flex-direction: column; min-height: 100%; }
+#game { display: flex; flex-direction: column; min-height: 100%; background: var(--bg); }
 .topbar { display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 64px; }
 .topbar h1.title { margin: 0; flex: 1; font-size: 1.05rem; color: var(--text); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .icon-btn { border: 0; background: var(--panel); border-radius: 10px; padding: 8px 12px; font-size: .9rem; transition: transform .08s, filter .15s; }
@@ -433,7 +433,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .topbar-spacer { flex: 1; }
 
 /* ストーリー・フリー対戦の画面もタイトルと同じ夜空の色合いに */
-#story, #menu { background: radial-gradient(ellipse at 50% -10%, #3a2f7a 0%, transparent 55%), linear-gradient(#0b0a24 0%, #171640 55%, #281f48 100%); }
+#story, #menu { background: linear-gradient(#100e2c 0%, #171640 55%, #241d44 100%); }
 #story .stage-card { background: rgba(20, 26, 74, .78); border: 1px solid rgba(255, 255, 255, .12); }
 #story .stage-card.next { background: linear-gradient(135deg, rgba(90, 66, 20, .9), rgba(20, 26, 74, .9)); }
 #menu .menu-card { background: linear-gradient(#141a4a, #0a0e2e); border: 3px solid #fff; box-shadow: 0 0 0 3px #0a0e2e, 0 10px 30px rgba(0, 0, 0, .55); }
@@ -505,7 +505,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .logo-big, .spark, .emblem { animation: none; } }
 
 /* ---- あそびかた（チュートリアル） ---- */
-#tutorial, #lesson { min-height: 100%; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% -10%, #2f5a7a 0%, transparent 55%), linear-gradient(#0b1424 0%, #142a40 55%, #1f2a48 100%); }
+#tutorial, #lesson { min-height: 100%; display: flex; flex-direction: column; background: linear-gradient(#0d1a2e 0%, #142a40 55%, #1b2744 100%); }
 .lesson-card {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
   border: 1px solid rgba(255, 255, 255, .12); border-radius: 14px; padding: 10px 12px;
@@ -645,7 +645,7 @@ main.screen:not(.title-screen) {
 /* レッスン: 説明・ボタンを置いた残りに盤（正方形は JS で合わせる）。横向きは盤を左、説明を右に */
 #lesson .screen-scroll { display: flex; }
 .lesson-body {
-  flex: 1; min-height: 0; width: min(94vw, 560px); margin: 0 auto; padding-bottom: 12px;
+  flex: 0 0 auto; min-height: 0; width: min(94vw, 560px); margin: 0 auto; padding-bottom: 12px;
   display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(160px, 1fr) auto auto;
   grid-template-areas: "talk" "board" "goal" "actions";
@@ -689,3 +689,5 @@ main.screen:not(.title-screen) {
 /* 起動直後: 中身（つづきから・進み具合など）を組み上げ終わるまで見せず、終わったらふわっと表示する */
 .title-inner { transition: opacity .35s ease-out; }
 html.booting .title-inner { opacity: 0; transition: none; }
+
+html, body { background: #0f0d24; }
