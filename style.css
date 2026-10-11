@@ -471,3 +471,32 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .status.review { color: #8fd3ff; }
 .moves .mv { cursor: pointer; border-radius: 6px; padding: 0 4px; margin-left: -4px; }
 .moves .mv.cur { background: rgba(224, 176, 76, .16); }
+
+/* ---- タイトルロゴ「チェスクエスト」（モード見出しより豪華に） ---- */
+.emblem-wrap { position: relative; display: inline-block; padding: 0 18px; }
+.spark { position: absolute; color: #fff6c8; text-shadow: 0 0 8px #ffd96b, 0 0 14px #ffb93b; animation: spark 2.6s ease-in-out infinite; pointer-events: none; }
+.sp1 { top: 4px; left: -2px; font-size: 14px; }
+.sp2 { top: -6px; right: 0; font-size: 18px; animation-delay: .9s; }
+.sp3 { bottom: 6px; right: -8px; font-size: 11px; animation-delay: 1.7s; }
+@keyframes spark { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 45% { opacity: 1; transform: scale(1) rotate(30deg); } }
+.logo-small { font-size: 1.8rem; letter-spacing: .55em; margin-right: -.55em; }
+.logo-big-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.logo-big {
+  font-size: clamp(2.6rem, 13vw, 3.5rem); letter-spacing: .14em; margin-right: -.14em;
+  /* 金の地に、ときどき光の筋が走る */
+  background:
+    linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, .95) 50%, transparent 58%) no-repeat,
+    linear-gradient(#fffbe0 0%, #f6d77a 40%, #c8902a 68%, #f7cf5c 100%);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 160% 0, 0 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #3a2206) drop-shadow(0 0 1px #1a0e02) drop-shadow(0 0 16px rgba(255, 200, 90, .5));
+  animation: glint 4.5s ease-in-out 1s infinite;
+}
+@keyframes glint { 0%, 70% { background-position: 160% 0, 0 0; } 100% { background-position: -60% 0, 0 0; } }
+.logo-orn { position: relative; flex: none; width: 34px; height: 7px; border-top: 2px solid #f2c96a; border-bottom: 1px solid rgba(242, 201, 106, .6); }
+.logo-orn:first-child { transform: scaleX(-1); }
+.logo-orn::after { content: ""; position: absolute; left: -6px; top: -4px; width: 9px; height: 9px; background: #ffd96b; transform: rotate(45deg); box-shadow: 0 0 8px rgba(255, 210, 100, .9); }
+.logo-en { margin-top: 8px; font-size: .8rem; font-weight: 800; letter-spacing: .62em; margin-right: -.62em; color: #e6c46a; text-shadow: 0 0 8px rgba(230, 196, 106, .5); }
+.logo-sub { margin-top: 6px; }
+@media (prefers-reduced-motion: reduce) { .logo-big, .spark, .emblem { animation: none; } }
