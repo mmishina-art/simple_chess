@@ -94,10 +94,9 @@
     updateHint();
   }
 
-  // タイトルのメニューの「インストール」は、インストール済みなら出さない
-  function updateHint() {
-    $('installItem').hidden = isStandalone();
-  }
+  // タイトルのメニューの「インストール」は常に表示する（インストール済みなら説明の窓でそう伝える）
+  function updateHint() {}
+
 
 
   window.Pwa = { init, openGuide, isStandalone };

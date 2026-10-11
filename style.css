@@ -291,7 +291,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- タイトル画面（ファンタジーRPG風） ---- */
 .title-screen {
-  position: relative; min-height: 100%; overflow-x: hidden;
+  position: relative; height: 100vh; height: 100dvh; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(#0b0a24 0%, #1d1a4a 55%, #3a2552 100%);
 }
@@ -563,3 +563,28 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .install-card-modal .mt-text { font-size: 1.7rem; letter-spacing: .08em; margin-right: -.08em; white-space: nowrap; }
 .install-tabs button { white-space: nowrap; font-size: .86rem; }
 .settings-card { max-height: calc(100dvh - 32px); overflow-y: auto; }
+
+/* ---- タイトル画面: スクロールせず1画面に収める（画面の高さに合わせて縮める） ---- */
+.title-inner {
+  gap: clamp(8px, 2.6vh, 26px);
+  padding-top: calc(env(safe-area-inset-top) + clamp(8px, 2vh, 24px));
+  padding-bottom: calc(env(safe-area-inset-bottom) + clamp(8px, 2vh, 28px));
+}
+.emblem { font-size: clamp(36px, 8vh, 72px); }
+.logo-text { margin-top: clamp(0px, .8vh, 8px); }
+.logo-small { font-size: clamp(1.05rem, 3.4vh, 1.8rem); }
+.logo-big { font-size: clamp(2.1rem, min(13vw, 7.4vh), 3.5rem); }
+.logo-en { margin-top: clamp(2px, .9vh, 8px); font-size: clamp(.66rem, 1.6vh, .8rem); }
+.logo-sub { margin-top: clamp(2px, .7vh, 6px); font-size: clamp(.78rem, 1.9vh, .9rem); }
+.title-menu { padding: clamp(4px, 1vh, 10px) 8px; }
+.rpg-item { padding-top: clamp(5px, 1.25vh, 11px); padding-bottom: clamp(5px, 1.25vh, 11px); font-size: clamp(.98rem, 2.3vh, 1.12rem); }
+.rpg-av { width: clamp(30px, 4.8vh, 40px); height: clamp(30px, 4.8vh, 40px); }
+.moon { width: clamp(40px, 7.5vh, 64px); height: clamp(40px, 7.5vh, 64px); }
+/* 背の低い画面では、メニューの小さな説明文と副題を省く */
+@media (max-height: 700px) {
+  .rpg-label small { display: none; }
+  .emblem-wrap .spark { display: none; }
+}
+@media (max-height: 560px) {
+  .logo-sub, .logo-en { display: none; }
+}
