@@ -107,7 +107,7 @@
     });
     $('startBtn').addEventListener('click', () => startGame());
     $('resumeBtn').addEventListener('click', () => showGame());
-    $('menuBackBtn').addEventListener('click', showTitle);
+    $('menuBackBtn').addEventListener('click', goBack);
     $('hapticSection').hidden = !fx.hapticSupported;
     syncMenu();
   }
@@ -142,7 +142,33 @@
     setMusic('title');
     syncMenu();
     storyBannerUpdate();
+    syncHistory();
   }
+
+  // ---- 「もどる」の統一（画面のボタンと、Android の戻る操作・ブラウザの戻る） ----
+  // タイトル以外の画面にいる間は履歴を1つ積んでおき、戻る操作をアプリ内の「もどる」に置き換える
+  let ignorePop = false;
+  function syncHistory() {
+    const atTitle = !$('title').hidden && $('settingsModal').hidden;
+    const pushed = !!(history.state && history.state.chessApp);
+    if (!atTitle && !pushed) history.pushState({ chessApp: 1 }, '');
+    else if (atTitle && pushed) { ignorePop = true; history.back(); }
+  }
+
+  function goBack() {
+    if (transitioning || scene || !$('promoModal').hidden || !$('resultModal').hidden) { syncHistory(); return; }
+    if (!$('settingsModal').hidden) { $('settingsModal').hidden = true; syncHistory(); return; }
+    if (!$('confirmModal').hidden) { $('confirmModal').hidden = true; syncHistory(); return; }
+    if (!$('debugModal').hidden) { $('debugModal').hidden = true; syncHistory(); return; }
+    if (!$('game').hidden) { if (state.mode === 'story') showStory(); else showMenu(); return; }
+    if (!$('story').hidden || !$('menu').hidden) { showTitle(); return; }
+    syncHistory();
+  }
+
+  window.addEventListener('popstate', () => {
+    if (ignorePop) { ignorePop = false; return; }
+    goBack();
+  });
 
   // ---- タイトル画面 ----
   function canContinue() {
@@ -160,6 +186,7 @@
     $('title').hidden = false;
     setMusic('title');
     updateTitle();
+    syncHistory();
   }
 
   function updateTitle() {
@@ -218,9 +245,9 @@
     $('continueBtn').addEventListener('click', (e) => titleGo(e.currentTarget, showGame));
     $('storyBtn').addEventListener('click', (e) => titleGo(e.currentTarget, enterStory));
     $('freeBtn').addEventListener('click', (e) => titleGo(e.currentTarget, showMenu));
-    $('settingsBtn').addEventListener('click', () => { syncMenu(); $('settingsModal').hidden = false; });
-    $('settingsClose').addEventListener('click', () => { $('settingsModal').hidden = true; });
-    $('settingsModal').addEventListener('click', (e) => { if (e.target === $('settingsModal')) $('settingsModal').hidden = true; });
+    $('settingsBtn').addEventListener('click', () => { syncMenu(); $('settingsModal').hidden = false; syncHistory(); });
+    $('settingsBack').addEventListener('click', goBack);
+    $('settingsModal').addEventListener('click', (e) => { if (e.target === $('settingsModal')) goBack(); });
     updateTitle();
   }
 
@@ -248,7 +275,7 @@
     $('gameTitle').textContent = isStory
       ? `第${state.stage}話 vs ${stageInfo().name}`
       : state.mode === 'cpu' ? `CPU（${LEVEL_NAME[state.level]}）と対戦` : '2人で対戦';
-    $('menuBtn').innerHTML = isStory ? '&#8592; ストーリー' : '&#8592; メニュー';
+    $('menuBtn').setAttribute('aria-label', isStory ? 'ストーリーにもどる' : 'フリー対戦メニューにもどる');
     $('newBtn').textContent = isStory ? 'やり直す' : '新しい対局';
     setMusic(isStory && !state.over ? (state.stage >= 9 ? 'boss' : 'battle') : null);
     rebuild();
@@ -256,6 +283,7 @@
     resizeBoard();
     render();
     afterMove(null);
+    syncHistory();
   }
 
   // 棋譜（UCIの列）から局面を再構築
@@ -746,6 +774,7 @@
     });
     const next = list.querySelector('.next');
     if (next) setTimeout(() => next.scrollIntoView({ block: 'center', behavior: 'smooth' }), 50);
+    syncHistory();
   }
 
   // タイトルから「ストーリーモード」: 初めての時はプロローグ → 第1話へそのまま進む
@@ -937,7 +966,7 @@
   }
 
   function initStory() {
-    $('storyBackBtn').addEventListener('click', showTitle);
+    $('storyBackBtn').addEventListener('click', goBack);
     $('prologueBtn').addEventListener('click', () =>
       playScene(Story.PROLOGUE, { stage: 0, chapter: 'プロローグ' }, () => { story.prologue = true; saveStory(); }));
     $('endingBtn').addEventListener('click', () =>
@@ -1023,7 +1052,7 @@
   }
 
   function initGameControls() {
-    $('menuBtn').addEventListener('click', () => (state.mode === 'story' ? showStory() : showMenu()));
+    $('menuBtn').addEventListener('click', goBack);
     $('undoBtn').addEventListener('click', undo);
     $('flipBtn').addEventListener('click', () => {
       if (flipping) return;

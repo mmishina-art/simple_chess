@@ -64,11 +64,12 @@
 
   <!-- フリー対戦メニュー -->
   <main id="menu" class="screen" hidden>
+    <header class="topbar">
+      <button type="button" id="menuBackBtn" class="back-btn" aria-label="タイトルにもどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+      <h1 class="title">フリー対戦</h1>
+    </header>
+    <div class="menu-wrap">
     <div class="menu-card">
-      <div class="menu-head">
-        <button type="button" id="menuBackBtn" class="icon-btn">&#8592; タイトル</button>
-        <h1>フリー対戦</h1>
-      </div>
 
       <section>
         <h2>モード</h2>
@@ -100,12 +101,16 @@
       <button type="button" id="startBtn" class="btn primary">対局開始</button>
       <button type="button" id="resumeBtn" class="btn" hidden>前回の続きから</button>
     </div>
+    </div>
   </main>
 
   <!-- せってい -->
   <div id="settingsModal" class="modal" hidden>
     <div class="modal-card rpg-window settings-card">
-      <h3>せってい</h3>
+      <header class="settings-head">
+        <button type="button" id="settingsBack" class="back-btn" aria-label="タイトルにもどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+        <h3>せってい</h3>
+      </header>
       <section>
         <h2>効果音</h2>
         <div class="seg" data-name="sound" role="radiogroup">
@@ -127,15 +132,14 @@
           <button type="button" data-value="off">オフ</button>
         </div>
       </section>
-      <button type="button" id="settingsClose" class="btn primary">とじる</button>
     </div>
   </div>
 
   <!-- ストーリー: ステージ選択 -->
   <main id="story" class="screen" hidden>
     <header class="topbar">
-      <button type="button" id="storyBackBtn" class="icon-btn">&#8592; タイトル</button>
-      <div class="title">ストーリー「影の塔」</div>
+      <button type="button" id="storyBackBtn" class="back-btn" aria-label="タイトルにもどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+      <h1 class="title">ストーリー「影の塔」</h1>
       <span id="debugBadge" class="debug-badge" hidden>DEBUG</span>
       <div id="storyCount" class="story-count"></div>
     </header>
@@ -150,8 +154,8 @@
   <!-- 対局画面 -->
   <main id="game" class="screen" hidden>
     <header class="topbar">
-      <button type="button" id="menuBtn" class="icon-btn" aria-label="メニューへ戻る">&#8592; メニュー</button>
-      <div id="gameTitle" class="title"></div>
+      <button type="button" id="menuBtn" class="back-btn" aria-label="もどる"><span class="back-arrow" aria-hidden="true">&#9664;&#xFE0E;</span>もどる</button>
+      <h1 id="gameTitle" class="title"></h1>
       <button type="button" id="soundBtn" class="icon-btn sound-btn" aria-label="効果音をオフにする">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="mute" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
