@@ -705,3 +705,7 @@ html, body { background: #0f0d24; }
 @media (max-height: 600px) { :root { --top-gap: 8px; } }
 /* ダブルタップでの拡大を止める（touch-action は継承されないので全要素に付ける。盤とタイトルは none のまま） */
 *, *::before, *::after { touch-action: manipulation; }
+/* 相手の駒をタッチしたとき: 動けるマスを赤系で表示（自分の駒の表示と区別する） */
+.sq.sel.peek::before { background: rgba(230, 70, 70, .45); }
+.sq.target.peek::after { background: rgba(200, 30, 30, .55); }
+.sq.target.capture.peek::after { background: transparent; border-color: rgba(200, 30, 30, .6); }

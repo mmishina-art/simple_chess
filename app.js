@@ -29,6 +29,7 @@
   let sanList = [];
   let selected = -1;
   let legalFromSelected = [];
+  let peeking = false; // 相手の駒をタッチして、動けるマスを見ているだけのとき
   let thinking = false;
   let aiRequestId = 0;
   let worker = null;
@@ -347,6 +348,7 @@
     state.moves = valid;
     selected = -1;
     legalFromSelected = [];
+    peeking = false;
   }
 
   // ---- 盤面 ----
@@ -399,6 +401,7 @@
     }
     selected = -1;
     legalFromSelected = [];
+    peeking = false;
     render();
   }
 
@@ -443,6 +446,7 @@
       const cls = ['sq', (r + c) % 2 === 0 ? 'light' : 'dark'];
       if (last && (sq === last.from || sq === last.to)) cls.push('last');
       if (sq === selected) cls.push('sel');
+      if (peeking && (sq === selected || targets.has(sq))) cls.push('peek');
       if (sq === checkSq) cls.push('check');
       if (hintMove && sq === hintMove.from) cls.push('hint-from');
       if (hintMove && sq === hintMove.to) cls.push('hint-to');
@@ -652,6 +656,7 @@
   function selectSquare(sq) {
     selected = sq;
     legalFromSelected = game.movesFrom(sq);
+    peeking = false;
     fx.play('select');
     render();
   }
@@ -659,11 +664,42 @@
   function clearSelection() {
     selected = -1;
     legalFromSelected = [];
+    peeking = false;
+    render();
+  }
+
+  // 相手の駒か（CPU戦なら CPU の駒、2人対戦なら手番でない側の駒）
+  function isEnemyPiece(p) {
+    return !!p && Chess.colorOf(p) !== (vsCPU() ? state.human : game.turn);
+  }
+
+  function canPeek() {
+    return viewPly === null && !flipping && !state.over && $('promoModal').hidden;
+  }
+
+  // 相手の駒が動けるマスを見せる（もう一度タッチで消す）
+  function peekSquare(sq) {
+    if (peeking && sq === selected) { clearSelection(); return; }
+    const p = game.board[sq];
+    const color = Chess.colorOf(p);
+    let list;
+    if (color === game.turn) list = game.movesFrom(sq);
+    else {
+      // 相手の手番だったら、として合法手を調べる
+      const g = new Chess(game.fen());
+      g.turn = color; g.ep = -1; g.computeHash();
+      list = g.movesFrom(sq).filter((m) => !m.captured || m.captured.toLowerCase() !== 'k');
+    }
+    selected = sq;
+    legalFromSelected = list;
+    peeking = true;
+    fx.play('select');
     render();
   }
 
   // 選択中の駒を sq へ動かす。動かせたら true
   function moveSelectedTo(sq, animate) {
+    if (peeking) return false;
     const candidates = legalFromSelected.filter((m) => m.to === sq);
     if (!candidates.length) return false;
     if (candidates.length > 1) choosePromotion(candidates, animate);
@@ -676,13 +712,14 @@
     const el = e.target.closest('.sq');
     if (!el || animating) return;
     if (viewPly !== null && !state.over) { fx.play('select'); setView(null); return; }
+    const sq = el._sq;
+    const p = game.board[sq];
     if (!canInteract()) {
+      if (isEnemyPiece(p) && canPeek()) { e.preventDefault(); peekSquare(sq); return; }
       if (!state.over && thinking) fx.play('error');
       return;
     }
     e.preventDefault();
-    const sq = el._sq;
-    const p = game.board[sq];
 
     // 指を置いた瞬間に移動させる（タップ→タップ操作）
     if (selected >= 0 && sq !== selected && moveSelectedTo(sq, true)) return;
@@ -692,8 +729,10 @@
       if (!wasSelected) selectSquare(sq);
       drag = { from: sq, id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, wasSelected, ghost: null, over: -1 };
       try { $('board').setPointerCapture(e.pointerId); } catch (err) { /* 無視 */ }
+    } else if (isEnemyPiece(p)) {
+      peekSquare(sq);
     } else if (selected >= 0) {
-      fx.play('error');
+      if (!peeking) fx.play('error');
       clearSelection();
     }
   }
@@ -808,6 +847,7 @@
     state.moves.push(Chess.uci(m));
     selected = -1;
     legalFromSelected = [];
+    peeking = false;
     const st = game.status();
     const byCPU = vsCPU() && Chess.colorOf(m.piece) !== state.human;
     const after = () => {
