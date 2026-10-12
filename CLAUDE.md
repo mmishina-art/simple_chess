@@ -13,7 +13,7 @@ python3 -m http.server 8000   # → http://localhost:8000/ (Service Worker の�
 npm test                      # node --test "tests/**/*.test.js"(Node 標準のテストランナー。インストール不要)
 ```
 
-CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実行し、通ったときだけ公開する。デフォルトブランチは `master`。
+CI は、PR で `.github/workflows/test.yml`(lint とテスト)、デフォルトブランチ `main` への push で `.github/workflows/pages.yml`(テストして、通ったときだけ公開)が動く。
 
 ## 更新時の必須作業(Service Worker)
 
@@ -23,9 +23,8 @@ CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実�
 
 ## 現状と標準のずれ(直すときは別 PR で)
 
-標準をほぼ満たしている。残る違いは次のとおり。
+標準をほぼ満たしている。残る違いは次のとおり(デフォルトブランチは `main` に変更済み)。
 
-- デフォルトブランチが `master`(標準は `main`)。切り替えるときは、`pages.yml` の `branches` を一緒に直す。
 - 起動に失敗したときの復旧(「なおす」ボタン)がない → `simple_quiz` の `js/boot.js` が手本。
 - 保存データ(設定・対局・ストーリーの進行)に版番号がなく、書き出し / 読み込みもない。
 - Dependabot の設定がない。
