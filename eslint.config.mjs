@@ -22,6 +22,7 @@ export default [
         Scene: "readonly",
         Pwa: "readonly",
         Tutorial: "readonly",
+        Backup: "readonly",
       },
     },
   },
