@@ -293,6 +293,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .update-bar span { flex: 1; font-weight: 700; font-size: .92rem; }
 .update-bar .btn { white-space: nowrap; }
+.boot-error { z-index: 100; }
+.boot-error small { display: block; font-weight: 400; opacity: .8; }
 
 /* ---- タイトル画面（ファンタジーRPG風） ---- */
 .title-screen {

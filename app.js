@@ -1212,4 +1212,6 @@
   // ピンチ拡大は許可する（アクセシビリティ）。ダブルタップでの誤拡大だけ、CSS の touch-action と dblclick で止める
   document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
   Pwa.init({ afterOpen: syncHistory });
+  // ここまで来たら起動成功（boot.js が見ている）
+  window.__appStarted = true;
 })();
