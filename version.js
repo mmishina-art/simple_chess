@@ -1,2 +1,2 @@
 /* チェスクエストのバージョン。公開するたびに上げ、sw.js の CACHE も同じ番号にする（テストで確認） */
-self.APP_VERSION = '1.35';
+self.APP_VERSION = '1.36';
