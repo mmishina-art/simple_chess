@@ -27,6 +27,7 @@ CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実�
 - `maskable` アイコンは専用の `icon-maskable-512.png` を持っている(OK)。
 - PR 時にテストが走らない → `push: [master]` だけなので、PR でも `npm test` を走らせる `test.yml` を追加したい。
 - Lint(ESLint)がない。
+- インストール方法の説明は、タイトルメニューの「インストール」と設定にある(`pwa.js` / `index.html` の `#installModal`)。標準を満たしている。
 
 ## 共通ルール(PWA アプリ共通)
 
@@ -42,4 +43,5 @@ CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実�
 - タップ領域は 44px 以上。`prefers-reduced-motion: reduce` でアニメーションを無効化する。結果表示は `aria-live` でも読み上げ、色だけで状態を伝えない。
 - 効果音は Web Audio で合成し、オン/オフ設定を用意する。
 - iPhone の安全領域(`env(safe-area-inset-*)`)を考慮する。
+- **最初の画面(タイトル/ホーム)に、インストール方法の説明への入口を置く。** iPhone は自動のインストール案内が出ないため、手順(iPhone / iPad は Safari の共有 → ホーム画面に追加、Android は Chrome のメニュー → アプリをインストール、パソコンはアドレスバーのインストールのマーク)を見せる。今使っている端末の説明を最初から開き、`beforeinstallprompt` が使えるときは「今すぐインストール」も出す。インストール済み(`display-mode: standalone`)のときは入口を出さない。実装の手本はテンプレート `mmishina-art/pwa-template` の `src/install.ts`。
 - 変更を終える前にテストを通し、`python3 -m http.server` などで実際に起動して動作を確認する。
