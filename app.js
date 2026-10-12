@@ -5,8 +5,6 @@
   const STORAGE_KEY = 'simple-chess-state-v1';
   const STORY_KEY = 'simple-chess-story-v1';
   const DEBUG_KEY = 'simple-chess-debug';
-  const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
-  const VS = '︎'; // 絵文字ではなく文字として表示させる
   const LEVEL_NAME = { 1: 'やさしい', 2: 'ふつう', 3: 'つよい' };
   const COLOR_NAME = { w: '白', b: '黒' };
   const VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9 };

@@ -171,7 +171,7 @@
   ];
 
   let deps = null;        // { onlyScreen, setMusic, syncHistory }
-  let progress = { done: [] };
+  const progress = { done: [] };
   let lesson = null;      // 進行中のレッスン
   const squares = [];
 

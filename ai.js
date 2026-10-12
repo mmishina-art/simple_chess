@@ -89,7 +89,7 @@ if (typeof importScripts === 'function' && typeof self !== 'undefined' && !self.
     const b = g.board;
     let mg = 0, nonPawn = 0;
     const material = { w: 0, b: 0 };
-    let bishops = { w: 0, b: 0 };
+    const bishops = { w: 0, b: 0 };
     for (let i = 0; i < 64; i++) {
       const p = b[i];
       if (!p) continue;
