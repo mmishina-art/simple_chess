@@ -51,7 +51,7 @@ python3 -m http.server 8000
 | `feedback.js` | 効果音と振動 |
 | `ai.js` | CPU の思考ルーチン（Web Worker で実行） |
 | `sw.js` | Service Worker（オフライン用キャッシュ） |
-| `manifest.webmanifest` / `icons/` | PWA 設定とアイコン |
+| `manifest.webmanifest` / `icons/` | PWA 設定とアイコン（アイコンは自作。`icon.svg` から PNG を書き出し） |
 
 ファイルを更新して公開するときは、`version.js` の `APP_VERSION` と `sw.js` の `CACHE` を同じ番号に上げてください（食い違うとテストが失敗します）。番号はタイトル画面の右下と「せってい」に表示されます。上げると、利用者の画面に「新しいバージョンがあります［更新］」が表示されます。
 
