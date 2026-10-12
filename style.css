@@ -12,6 +12,10 @@
   --last: rgba(205, 210, 90, .5);
   --check: radial-gradient(circle, rgba(255, 40, 40, .95) 0%, rgba(230, 20, 20, .6) 40%, rgba(200, 0, 0, 0) 75%);
   --hint: rgba(20, 30, 20, .35);
+  /* 相手の駒をタッチしたときの、動けるマスの表示 */
+  --peek-sel: rgba(230, 70, 70, .45);
+  --peek-dot: rgba(200, 30, 30, .55);
+  --peek-ring: rgba(200, 30, 30, .6);
   --sq: 40px;
   /* 盤の大きさ: 画面の高さから、上のバー・対局者・状態・ボタン・棋譜の帯の分（約330px）を引いた残り */
   /* iPhone の画面上端（ステータスバーの下）はぼかしがかかるので、上に少し余白をとる */
@@ -711,3 +715,8 @@ html, body { background: #0f0d24; }
 /* ---- 記録のバックアップ（せってい） ---- */
 .backup-note { margin: 0 0 8px; font-size: .85rem; color: var(--muted); }
 .file-btn { display: block; box-sizing: border-box; text-align: center; margin-top: 8px; }
+
+/* 相手の駒をタッチしたとき: 動けるマスを赤系で表示（自分の駒の表示と区別する） */
+.sq.sel.peek::before { background: var(--peek-sel); }
+.sq.target.peek::after { background: var(--peek-dot); }
+.sq.target.capture.peek::after { background: transparent; border-color: var(--peek-ring); }
