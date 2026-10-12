@@ -23,7 +23,8 @@
       const data = noiseBuffer.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     }
-    if (ctx.state === 'suspended') ctx.resume();
+    // 画面が隠れている間は音を止めたままにする（CPU の指し手の音などで鳴り出さないように）
+    if (ctx.state === 'suspended' && !document.hidden) ctx.resume();
     return ctx;
   }
 
@@ -160,6 +161,21 @@
     bgmTick();
     bgmTimer = setInterval(bgmTick, 60);
   }
+
+  // アプリが裏に回ったら音を止め、戻ったら再開する（裏で BGM が鳴り続けないように）
+  function onVisibility() {
+    if (!ctx) return;
+    if (document.hidden) {
+      clearInterval(bgmTimer);
+      bgmTimer = 0;
+      ctx.suspend().catch(() => {});
+    } else {
+      ctx.resume().catch(() => {});
+      if (bgmBus && !bgmTimer) bgmTimer = setInterval(bgmTick, 60);
+    }
+  }
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('pagehide', onVisibility);
 
   // 会話の「しゃべり音」
   function blip(freq) {
