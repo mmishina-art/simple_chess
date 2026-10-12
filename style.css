@@ -707,3 +707,7 @@ html, body { background: #0f0d24; }
 @media (max-height: 600px) { :root { --top-gap: 8px; } }
 /* ダブルタップでの拡大を止める（touch-action は継承されないので全要素に付ける。盤とタイトルは none のまま） */
 *, *::before, *::after { touch-action: manipulation; }
+
+/* ---- 記録のバックアップ（せってい） ---- */
+.backup-note { margin: 0 0 8px; font-size: .85rem; color: var(--muted); }
+.file-btn { display: block; box-sizing: border-box; text-align: center; margin-top: 8px; }

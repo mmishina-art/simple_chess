@@ -159,6 +159,13 @@
         <h2>アプリ</h2>
         <button type="button" id="settingsInstall" class="btn wide">アプリとしてインストールする方法</button>
       </section>
+      <section>
+        <h2>記録のバックアップ</h2>
+        <p class="backup-note">記録は、このブラウザの中にだけ保存されています。ファイルに残しておくと、消えたときに戻せます。</p>
+        <button type="button" id="backupExport" class="btn wide">ファイルに書き出す</button>
+        <label class="btn wide file-btn">ファイルから読み込む<input type="file" id="backupImport" accept="application/json,.json" hidden></label>
+        <p id="backupMessage" class="backup-note" role="status"></p>
+      </section>
     </div>
   </div>
 
@@ -420,6 +427,7 @@
   <script src="story.js"></script>
   <script src="scene.js"></script>
   <script src="pwa.js"></script>
+  <script src="backup.js"></script>
   <script src="tutorial.js"></script>
   <script src="app.js"></script>
 </body>
