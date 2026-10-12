@@ -23,11 +23,11 @@ CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実�
 
 ## 現状と標準のずれ(直すときは別 PR で)
 
-- viewport に `maximum-scale=1, user-scalable=no` が入っている → 標準はピンチ拡大を許可。外す場合は盤の操作でのダブルタップ誤拡大を `touch-action: manipulation` で防げているか確認する。
-- `maskable` アイコンは専用の `icon-maskable-512.png` を持っている(OK)。
-- PR 時にテストが走らない → `push: [master]` だけなので、PR でも `npm test` を走らせる `test.yml` を追加したい。
-- Lint(ESLint)がない。
-- インストール方法の説明は、タイトルメニューの「インストール」と設定にある(`pwa.js` / `index.html` の `#installModal`)。標準を満たしている。
+標準をほぼ満たしている。残る違いは次の1点だけ。
+
+- デフォルトブランチが `master`(標準は `main`)。切り替えるときは、`pages.yml` の `branches` を一緒に直す。
+
+対応済み: ピンチ拡大の許可、PR 時のテスト(`test.yml`)、ESLint、専用の maskable アイコン、インストール方法の説明(タイトルメニューの「インストール」と設定)、バージョン表示(タイトル画面の右下と「せってい」)、更新ボタン方式。
 
 ## 共通ルール(PWA アプリ共通)
 
@@ -44,4 +44,5 @@ CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実�
 - 効果音は Web Audio で合成し、オン/オフ設定を用意する。
 - iPhone の安全領域(`env(safe-area-inset-*)`)を考慮する。
 - **最初の画面(タイトル/ホーム)に、インストール方法の説明への入口を置く。** iPhone は自動のインストール案内が出ないため、手順(iPhone / iPad は Safari の共有 → ホーム画面に追加、Android は Chrome のメニュー → アプリをインストール、パソコンはアドレスバーのインストールのマーク)を見せる。今使っている端末の説明を最初から開き、`beforeinstallprompt` が使えるときは「今すぐインストール」も出す。インストール済み(`display-mode: standalone`)のときは入口を出さない。実装の手本はテンプレート `mmishina-art/pwa-template` の `src/install.ts`。
+- **タイトル画面(最初の画面)にバージョンを表示する**(例: `v1.2`)。更新が反映されたかを、利用者がひと目で確認できるようにするため。バージョンの元は1か所に置き、公開のたびに上げる。キャッシュ優先の Service Worker を手で書いている場合は、キャッシュ名の番号と同じにして、食い違いをテストで検出する。
 - 変更を終える前にテストを通し、`python3 -m http.server` などで実際に起動して動作を確認する。
