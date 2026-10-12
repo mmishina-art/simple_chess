@@ -28,6 +28,7 @@ CI は、PR で `.github/workflows/test.yml`(lint とテスト)、デフォル�
 標準をほぼ満たしている。残る違いは次のとおり(デフォルトブランチは `main` に変更済み)。
 
 - README に、画像・音・文章の出どころの記載が一部(BGM は自作曲)しかない。
+- 画面の上端: `apple-mobile-web-app-status-bar-style` は `black`(不透明)、上端の余白は `--safe-top`(安全領域 + `--top-gap` の 24px)を使っていて、標準を満たしている(上のぼかしの対応済み)。
 
 対応済み: ピンチ拡大の許可、PR 時のテスト(`test.yml`)、ESLint、専用の maskable アイコン、インストール方法の説明(タイトルメニューの「インストール」と設定)、バージョン表示(タイトル画面の右下と「せってい」)、更新ボタン方式、Dependabot(`.github/dependabot.yml`。npmは毎週、Actions は毎月)、起動失敗時の復旧(`boot.js`)、保存データの版番号とバックアップ(`backup.js`)。
 
@@ -51,6 +52,7 @@ CI は、PR で `.github/workflows/test.yml`(lint とテスト)、デフォル�
 - **保存データには版番号(`schemaVersion` など)を持たせ、保存の形を変えるときは移行処理を書く。記録を残すアプリは、ファイルへの書き出し / 読み込みを用意する**(`localStorage` は、ブラウザの都合で消えることがある。特に iPhone)。手本はテンプレートの `src/backup.ts` と `src/storage.ts`、または `simple_quiz` の `js/backup.js`。
 - **起動に失敗したときの復旧を用意する。** キャッシュ優先の Service Worker は、ファイルが食い違うと起動しなくなることがある。メインとは別の普通のスクリプトで、起動できなかったとき、キャッシュを消して読み込み直す(1回目は自動、2分以内の2回目は「なおす」ボタン)。保存データは消さない。手本は `simple_quiz` の `js/boot.js` とテンプレートの `public/boot.js`。
 - **同じサイトに載るアプリ: 名前をアプリごとに別にする。** GitHub Pages では、すべてのアプリが同じサイト(`mmishina-art.github.io`)に載り、`localStorage`・`sessionStorage`・Service Worker・キャッシュはサイトの単位で共有される。保存データのキー、バックアップの `app` 名、キャッシュ名、`sessionStorage` のキーは、アプリごとに別の名前(接頭辞)にする。起動失敗の復旧(`boot.js`)と、Service Worker の古いキャッシュの片づけは、**自分のアプリの Service Worker とキャッシュだけ**を対象にする(`k !== CACHE` のように「自分以外すべて」を消さない)。
+- **iPhone の画面の上端(ぼかしの帯)を避ける。** ホーム画面アプリで、ステータスバーの下に内容が入り込むと、iOS がそこをぼかして、上端の文字が読みにくくなる(`simple_chess`・`simple_blackjack`・`simple_shogi` で起きた)。`index.html` の `apple-mobile-web-app-status-bar-style` は**不透明**にし(暗い固定: `black` / 明るい固定: `default`。**`black-translucent` にしない**)、上端の余白は `env(safe-area-inset-top)` だけにせず、`--safe-top`(安全領域 + `--top-gap` の 24px)を使う。画面の高さから上の余白を引いて計算しているところは、同じ式で連動させる(忘れると、ぴったり収まっていた画面がはみ出してスクロールする)。ブラウザでは再現できないので、実機の iPhone で確認する。手本は、テンプレート `mmishina-art/pwa-template` の `src/style.css` と `scripts/check-dist.mjs`。
 - **外部のリソース(Web フォント、CDN のスクリプトなど)に頼らない。** オフラインで動かなくなるため。使うなら、Service Worker のキャッシュ対象にする。
 - **画像・音・問題文・文章は、自作するか、ライセンスを README に明記する。**
 - 画面を変えたら、スマホの幅・小さい画面(iPhone SE の大きさ)・ダークモード(対応しているアプリ)で実際に表示して確認する(スクリーンショットを見る)。PR の本文に、確認したこと(実機か、していないか)を書く。
