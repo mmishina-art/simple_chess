@@ -1,6 +1,6 @@
 /* シンプルチェス: Service Worker（オフライン対応）
  * ファイルを更新したら CACHE のバージョンを上げること。 */
-const CACHE = 'simple-chess-v1.38'; // version.js の APP_VERSION と同じ番号
+const CACHE = 'simple-chess-v1.39'; // version.js の APP_VERSION と同じ番号
 const ASSETS = [
   './',
   'index.html',
@@ -34,10 +34,11 @@ self.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// 古い版のキャッシュを片づける。名前が「simple-chess-」で始まるものだけ（同じサイトのほかのアプリのキャッシュは消さない）
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('simple-chess-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

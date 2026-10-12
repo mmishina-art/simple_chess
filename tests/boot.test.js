@@ -20,3 +20,17 @@ test('app.js は起動できたら window.__appStarted = true にする', () => 
 test('boot.js は sw.js のキャッシュ対象に入っている', () => {
   assert.match(read('sw.js'), /'boot\.js'/);
 });
+
+test('boot.js の復旧は、このアプリの Service Worker とキャッシュだけを対象にする（同じサイトのほかのアプリを消さない）', () => {
+  const boot = read('boot.js');
+  assert.match(boot, /regs\.filter\(isMyRegistration\)/);
+  assert.match(boot, /keys\.filter\(isMyCache\)/);
+  // キャッシュ名は、sw.js の CACHE と同じ接頭辞（simple-chess-）で始まる
+  const id = /var APP_ID = '([^']+)'/.exec(boot)[1];
+  assert.match(read('sw.js'), new RegExp(`const CACHE = '${id}-v`));
+});
+
+test('sw.js の古いキャッシュの片づけは、このアプリのキャッシュ（simple-chess-）だけを対象にする', () => {
+  const sw = read('sw.js');
+  assert.match(sw, /keys\.filter\(\(k\) => k\.startsWith\('simple-chess-'\) && k !== CACHE\)/);
+});
