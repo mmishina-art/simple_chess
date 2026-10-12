@@ -23,7 +23,7 @@ CI(`.github/workflows/pages.yml`)は `master` への push で `npm test` を実�
 
 ## 現状と標準のずれ(直すときは別 PR で)
 
-標準をほぼ満たしている。残る違いは次の1点だけ。
+標準をほぼ満たしている。残る違いは次のとおり。
 
 - デフォルトブランチが `master`(標準は `main`)。切り替えるときは、`pages.yml` の `branches` を一緒に直す。
 - 起動に失敗したときの復旧(「なおす」ボタン)がない → `simple_quiz` の `js/boot.js` が手本。
